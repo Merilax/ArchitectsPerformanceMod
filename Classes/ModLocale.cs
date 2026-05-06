@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BA3StandardMod;
+namespace PerformanceMod;
 
 public class Localization
 {
@@ -14,10 +14,12 @@ public class Localization
 		setLow,
 		setMedium,
 		setHigh,
+		setRaceOnly,
 		settingsModButton,
 		settingsValueGlobalIllumination,
 		settingsValueReflections,
-		settingsValueAmbientOcclusion
+		settingsValueAmbientOcclusion,
+		settingsValueDockLights,
 	}
 
 	public delegate void LocaleChanged();
@@ -30,10 +32,12 @@ public class Localization
 		{LocaleItems.setLow, "Low"},
 		{LocaleItems.setMedium, "Medium"},
 		{LocaleItems.setHigh, "High"},
+		{LocaleItems.setRaceOnly, "Only in race"},
 		{LocaleItems.settingsModButton, "Mod config"},
-		{LocaleItems.settingsValueGlobalIllumination, "Global Illumination"},
-		{LocaleItems.settingsValueReflections, "Screen-Space Reflections"},
+		{LocaleItems.settingsValueGlobalIllumination, "Global Illumination [!]"},
 		{LocaleItems.settingsValueAmbientOcclusion, "Ambient Occlusion"},
+		{LocaleItems.settingsValueReflections, "Screen-Space Reflections"},
+		{LocaleItems.settingsValueDockLights, "Dock light quality"},
 	};
 	private readonly static Dictionary<LocaleItems, string> dict_jp = new()
 	{
@@ -42,10 +46,12 @@ public class Localization
 		{LocaleItems.setLow, "Low"},
 		{LocaleItems.setMedium, "Medium"},
 		{LocaleItems.setHigh, "High"},
+		{LocaleItems.setRaceOnly, "レース中のみ"},
 		{LocaleItems.settingsModButton, "MODの設定"},
-		{LocaleItems.settingsValueGlobalIllumination, "グローバルイルミネーション"},
-		{LocaleItems.settingsValueReflections, "画面空間反射"},
+		{LocaleItems.settingsValueGlobalIllumination, "グローバルイルミネーション [!]"},
 		{LocaleItems.settingsValueAmbientOcclusion, "アンビエントオクルージョン"},
+		{LocaleItems.settingsValueReflections, "画面空間反射"},
+		{LocaleItems.settingsValueDockLights, "ドックライトの品質"},
 	};
 
 	public static void SetLocale(Config.LanguageType lang)

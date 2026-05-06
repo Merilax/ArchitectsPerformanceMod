@@ -9,35 +9,53 @@ using UnityEngine.Localization.Components;
 using TMPro;
 using System.Collections.Generic;
 using BepInEx.Configuration;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.VFX;
+using Unity.Cinemachine;
+using System;
 
-namespace BA3StandardMod;
+namespace PerformanceMod;
 
 public class ModSettings
 {
-	public enum ValueEnum { off, on, low, medium, high }
-	// public enum GenericToggleEnum { off, on }
-	// public enum GenericTieredEnum { low, medium, high }
-	// public enum GenericTieredWithOffEnum { off, low, medium, high }
-	public static readonly Dictionary<ValueEnum, Localization.LocaleItems> valueTextRelation = new(){
-		{ValueEnum.off, Localization.LocaleItems.setOff},
-		{ValueEnum.on, Localization.LocaleItems.setOn},
-		{ValueEnum.low, Localization.LocaleItems.setLow},
-		{ValueEnum.medium, Localization.LocaleItems.setMedium},
-		{ValueEnum.high, Localization.LocaleItems.setHigh},
+	public enum GenericToggleEnum { off, on }
+	public enum GenericTieredEnum { low, medium, high }
+	public enum GenericTieredWithOffEnum { off, low, medium, high }
+	public enum GenericRaceOnlyEnum { off, raceOnly, on }
+	public static readonly Dictionary<Enum, Localization.LocaleItems> valueTextRelation = new(){
+		{GenericToggleEnum.off, Localization.LocaleItems.setOff},
+		{GenericToggleEnum.on, Localization.LocaleItems.setOn},
+
+		{GenericTieredEnum.low, Localization.LocaleItems.setLow},
+		{GenericTieredEnum.medium, Localization.LocaleItems.setMedium},
+		{GenericTieredEnum.high, Localization.LocaleItems.setHigh},
+
+		{GenericTieredWithOffEnum.off, Localization.LocaleItems.setOff},
+		{GenericTieredWithOffEnum.low, Localization.LocaleItems.setLow},
+		{GenericTieredWithOffEnum.medium, Localization.LocaleItems.setMedium},
+		{GenericTieredWithOffEnum.high, Localization.LocaleItems.setHigh},
+		
+		{GenericRaceOnlyEnum.off, Localization.LocaleItems.setOff},
+		{GenericRaceOnlyEnum.raceOnly, Localization.LocaleItems.setRaceOnly},
+		{GenericRaceOnlyEnum.on, Localization.LocaleItems.setOn},
 	};
 
-	private static readonly IReadOnlyList<ValueEnum> genericToggleValues = [ValueEnum.off, ValueEnum.on];
-	private static readonly IReadOnlyList<ValueEnum> genericTierValues = [ValueEnum.low, ValueEnum.medium, ValueEnum.high];
-	private static readonly IReadOnlyList<ValueEnum> genericTierValuesWithDisabled = [ValueEnum.off, ValueEnum.low, ValueEnum.medium, ValueEnum.high];
+	private static readonly IReadOnlyList<GenericToggleEnum> genericToggleValues = [GenericToggleEnum.off, GenericToggleEnum.on];
+	private static readonly IReadOnlyList<GenericTieredEnum> genericTierValues = [GenericTieredEnum.low, GenericTieredEnum.medium, GenericTieredEnum.high];
+	private static readonly IReadOnlyList<GenericTieredWithOffEnum> genericTierValuesWithDisabled = [GenericTieredWithOffEnum.off, GenericTieredWithOffEnum.low, GenericTieredWithOffEnum.medium, GenericTieredWithOffEnum.high];
+	private static readonly IReadOnlyList<GenericRaceOnlyEnum> genericRaceOnlyValues = [GenericRaceOnlyEnum.off, GenericRaceOnlyEnum.raceOnly, GenericRaceOnlyEnum.on];
 
 	// Config entries
 	private static ConfigFile config;
-	public static ConfigEntry<ValueEnum> confGlobalIllumination;
-	public static ConfigEntry<ValueEnum> confReflections;
-	public static ConfigEntry<ValueEnum> confAmbientOcclusion;
-	private static CycleConfigEntry<ValueEnum> _confGlobalIllumination;
-	private static CycleConfigEntry<ValueEnum> _confReflections;
-	private static CycleConfigEntry<ValueEnum> _confAmbientOcclusion;
+	public static ConfigEntry<GenericToggleEnum> confGlobalIllumination;
+	public static ConfigEntry<GenericRaceOnlyEnum> confReflections;
+	public static ConfigEntry<GenericToggleEnum> confAmbientOcclusion;
+	public static ConfigEntry<GenericToggleEnum> confDockLights;
+	private static CycleConfigEntry<GenericToggleEnum> _confGlobalIllumination;
+	private static CycleConfigEntry<GenericRaceOnlyEnum> _confReflections;
+	private static CycleConfigEntry<GenericToggleEnum> _confAmbientOcclusion;
+	private static CycleConfigEntry<GenericToggleEnum> _confDockLights;
 
 	// Objects
 	private static Scene rootScene;
@@ -146,9 +164,10 @@ public class ModSettings
 
 		// Populate with custom settings
 		List<Localization.LocaleItems> buttons = [
-			Localization.LocaleItems.settingsValueGlobalIllumination, // Very expensive
-			Localization.LocaleItems.settingsValueReflections, // Almost free
-			Localization.LocaleItems.settingsValueAmbientOcclusion, // Almost free
+			Localization.LocaleItems.settingsValueGlobalIllumination, // Very heavy
+			Localization.LocaleItems.settingsValueAmbientOcclusion, // Free
+			Localization.LocaleItems.settingsValueReflections, // Light, Very light in races
+			Localization.LocaleItems.settingsValueDockLights, // Light
 		];
 		for (int i = 0; i < content.transform.childCount; i++)
 		{
@@ -186,20 +205,24 @@ public class ModSettings
 		TextMeshProUGUI valueText = obj.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
 		valueText.text = "N/A";
 
-		CycleConfigEntry<ValueEnum> entry = null;
+		dynamic entry = null;
 		switch (title)
 		{
 			case Localization.LocaleItems.settingsValueGlobalIllumination:
-				_confGlobalIllumination = new CycleConfigEntry<ValueEnum>(confGlobalIllumination, genericToggleValues, valueText);
+				_confGlobalIllumination = new CycleConfigEntry<GenericToggleEnum>(confGlobalIllumination, genericToggleValues, valueText);
 				entry = _confGlobalIllumination;
 				break;
 			case Localization.LocaleItems.settingsValueReflections:
-				_confReflections = new CycleConfigEntry<ValueEnum>(confReflections, genericToggleValues, valueText);
+				_confReflections = new CycleConfigEntry<GenericRaceOnlyEnum>(confReflections, genericRaceOnlyValues, valueText);
 				entry = _confReflections;
 				break;
 			case Localization.LocaleItems.settingsValueAmbientOcclusion:
-				_confAmbientOcclusion = new CycleConfigEntry<ValueEnum>(confAmbientOcclusion, genericToggleValues, valueText);
+				_confAmbientOcclusion = new CycleConfigEntry<GenericToggleEnum>(confAmbientOcclusion, genericToggleValues, valueText);
 				entry = _confAmbientOcclusion;
+				break;
+			case Localization.LocaleItems.settingsValueDockLights:
+				_confDockLights = new CycleConfigEntry<GenericToggleEnum>(confDockLights, genericToggleValues, valueText);
+				entry = _confDockLights;
 				break;
 		}
 
@@ -239,11 +262,14 @@ public class ModSettings
 	{
 		config = Plugin.config;
 
-		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", ValueEnum.on, "Toggles volumetric lighting and reflections around the game world.");
-		confReflections = config.Bind("Graphics", "Reflections", ValueEnum.on, "Toggles reflecting surfaces.");
-		confAmbientOcclusion = config.Bind("Graphics", "AmbientOcclusion", ValueEnum.on, "Toggles ambient occlusion.");
+		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", GenericToggleEnum.on, "Toggles volumetric lighting and reflections around the game world.");
+		confReflections = config.Bind("Graphics", "Reflections", GenericRaceOnlyEnum.on, "Toggles reflecting surfaces.");
+		confAmbientOcclusion = config.Bind("Graphics", "AmbientOcclusion", GenericToggleEnum.on, "Toggles ambient occlusion.");
+		confDockLights = config.Bind("Graphics", "DockLights", GenericToggleEnum.on, "Sets the quality of lights in the player dock.");
 
 		ApplyChanges();
+
+		// Config.Debug_OutputRawSaveData = true;
 	}
 
 	public static void OnSettingsApply()
@@ -251,6 +277,7 @@ public class ModSettings
 		_confGlobalIllumination.Confirm();
 		_confReflections.Confirm();
 		_confAmbientOcclusion.Confirm();
+		_confDockLights.Confirm();
 
 		config.Save();
 
@@ -262,12 +289,14 @@ public class ModSettings
 		ModPerformance.SetGlobalIllumination(confGlobalIllumination.Value);
 		ModPerformance.SetReflections(confReflections.Value);
 		ModPerformance.SetAmbientOcclusion(confAmbientOcclusion.Value);
+		ModPerformance.SetDockLights(confDockLights.Value);
 	}
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(Scene_Settings), nameof(Scene_Settings.ApplySettings_Graphic))]
 	public static void RescaleUI()
 	{
+		// Why this isn't automatically handled is beyond me.
 		Plugin.Log.LogInfo("Rescaling...");
 		settingsButton.transform.localScale = new Vector3(1, 1, 1);
 		applyButton.transform.localScale = new Vector3(1, 1, 1);
@@ -277,21 +306,24 @@ public class ModSettings
 
 public class CycleConfigEntry<T>
 {
-	private readonly ConfigEntry<ModSettings.ValueEnum> _configEntry;
-	private readonly IReadOnlyList<ModSettings.ValueEnum> _options;
+	private readonly ConfigEntry<T> _configEntry;
+	private readonly IReadOnlyList<T> _options;
 	private readonly TextMeshProUGUI _text;
-	private ModSettings.ValueEnum _pendingValue;
-	public ModSettings.ValueEnum Pending => _pendingValue;
-	public ModSettings.ValueEnum Value => _configEntry.Value;
+	private T _pendingValue;
+	public T Pending => _pendingValue;
+	public T Value => _configEntry.Value;
 
-	public CycleConfigEntry(ConfigEntry<ModSettings.ValueEnum> configEntry, IReadOnlyList<ModSettings.ValueEnum> options, TextMeshProUGUI textMesh = null)
+	public CycleConfigEntry(ConfigEntry<T> configEntry, IReadOnlyList<T> options, TextMeshProUGUI textMesh = null)
 	{
 		_configEntry = configEntry;
 		_options = options;
 		_pendingValue = configEntry.Value;
 		_text = textMesh;
-		_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue]);
-		Localization.OnLocaleChanged += () => { _text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue]); };
+		if (_pendingValue is Enum)
+		{
+			_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue as Enum]);
+			Localization.OnLocaleChanged += () => { _text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue as Enum]); };
+		}
 	}
 
 	private int GetPendingIndex()
@@ -307,13 +339,15 @@ public class CycleConfigEntry<T>
 	{
 		int prev = (GetPendingIndex() - 1 + _options.Count) % _options.Count;
 		_pendingValue = _options[prev];
-		_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue]);
+		if (_pendingValue is Enum)
+			_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue as Enum]);
 	}
 	public void OnRightButton()
 	{
 		int next = (GetPendingIndex() + 1) % _options.Count;
 		_pendingValue = _options[next];
-		_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue]);
+		if (_pendingValue is Enum)
+			_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue as Enum]);
 	}
 	public void Confirm()
 	{
@@ -322,6 +356,7 @@ public class CycleConfigEntry<T>
 	public void Cancel()
 	{
 		_pendingValue = _configEntry.Value;
-		_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue]);
+		if (_pendingValue is Enum)
+			_text?.text = Localization.GetText(ModSettings.valueTextRelation[_pendingValue as Enum]);
 	}
 }

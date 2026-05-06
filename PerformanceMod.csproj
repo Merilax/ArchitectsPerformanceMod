@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>StandardMod</AssemblyName>
-    <Product>Standard Mod</Product>
-    <Version>1.0.0</Version>
+    <AssemblyName>PerformanceMod</AssemblyName>
+    <Product>Performance Mod</Product>
+    <Version>0.0.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -12,7 +12,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>BA3StandardMod</RootNamespace>
+    <RootNamespace>PerformanceMod</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -50,6 +50,15 @@
     </Reference>
     <Reference Include="UnityEngineRenderingHD">
       <HintPath>..\lib\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngineRenderingHDConfig">
+      <HintPath>..\lib\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngineVFX">
+      <HintPath>..\lib\UnityEngine.VFXModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityCinemachine">
+      <HintPath>..\lib\Unity.Cinemachine.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

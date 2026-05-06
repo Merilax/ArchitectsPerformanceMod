@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace BA3StandardMod;
+namespace PerformanceMod;
 
 public class Utils
 {

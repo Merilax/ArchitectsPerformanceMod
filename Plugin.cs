@@ -4,7 +4,7 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 
-namespace BA3StandardMod;
+namespace PerformanceMod;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInProcess("BREAK ARTS III.exe")]
@@ -28,6 +28,7 @@ public class Plugin : BasePlugin
         var harmony = Harmony.CreateAndPatchAll(typeof(PluginInitializer));
         harmony.PatchAll(typeof(GarageCameraPatch));
         harmony.PatchAll(typeof(ModSettings));
+        harmony.PatchAll(typeof(ModPerformance));
 
         Log.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is ready.");
     }
