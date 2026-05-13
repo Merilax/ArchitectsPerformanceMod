@@ -60,5 +60,14 @@
     <Reference Include="UnityCinemachine">
       <HintPath>..\lib\Unity.Cinemachine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityTextRendering">
+      <HintPath>..\lib\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="FusionRuntime">
+      <HintPath>..\lib\Fusion.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Crest">
+      <HintPath>..\lib\Crest.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
