@@ -31,7 +31,6 @@ public class Localization
 		SET_DOCKLIGHTS_ENTRY,
 		SET_AA_ENTRY,
 		SET_MACHINEPARTICLES_ENTRY,
-		SET_REDUCEOCEAN_ENTRY,
 	}
 
 	public delegate void LocaleChanged();
@@ -61,7 +60,6 @@ public class Localization
 		{LocaleItems.SET_DOCKLIGHTS_ENTRY, "Dock light quality"},
 		{LocaleItems.SET_AA_ENTRY, "Anti-Aliasing"},
 		{LocaleItems.SET_MACHINEPARTICLES_ENTRY, "Machine particles"},
-		{LocaleItems.SET_REDUCEOCEAN_ENTRY, "Reduce ocean quality"},
 	};
 	private readonly static Dictionary<LocaleItems, string> dict_jp = new()
 	{
@@ -87,7 +85,6 @@ public class Localization
 		{LocaleItems.SET_DOCKLIGHTS_ENTRY, "ドックライトの品質"},
 		{LocaleItems.SET_AA_ENTRY, "アンチエイリアシング"},
 		{LocaleItems.SET_MACHINEPARTICLES_ENTRY, "機械の微粒子"},
-		{LocaleItems.SET_REDUCEOCEAN_ENTRY, "Reduce ocean quality"},
 	};
 	private readonly static Dictionary<LocaleItems, string> dict_cn_t = new()
 	{
@@ -113,7 +110,6 @@ public class Localization
 		{LocaleItems.SET_DOCKLIGHTS_ENTRY, "碼頭照明品質"},
 		{LocaleItems.SET_AA_ENTRY, "抗鋸齒"},
 		{LocaleItems.SET_MACHINEPARTICLES_ENTRY, "機械微粒"},
-		{LocaleItems.SET_REDUCEOCEAN_ENTRY, "Reduce ocean quality"},
 	};
 	private readonly static Dictionary<LocaleItems, string> dict_cn_s = new()
 	{
@@ -139,7 +135,6 @@ public class Localization
 		{LocaleItems.SET_DOCKLIGHTS_ENTRY, "码头照明质量"},
 		{LocaleItems.SET_AA_ENTRY, "抗锯齿"},
 		{LocaleItems.SET_MACHINEPARTICLES_ENTRY, "机械颗粒"},
-		{LocaleItems.SET_REDUCEOCEAN_ENTRY, "Reduce ocean quality"},
 	};
 
 	public static void SetLocale() // Config.LanguageType lang

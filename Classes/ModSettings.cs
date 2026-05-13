@@ -73,7 +73,6 @@ public class ModSettings
 	public static ConfigEntry<GenericToggleEnum> confDockLights;
 	public static ConfigEntry<AntialiasingEnum> confAntialiasing;
 	public static ConfigEntry<GenericQuantityEnum> confMachineParticles;
-	// public static ConfigEntry<GenericToggleEnum> confReduceOcean;
 	private static CycleConfigEntry<GenericToggleEnum> _confGlobalIllumination;
 	private static CycleConfigEntry<GenericRaceOnlyEnum> _confReflections;
 	private static CycleConfigEntry<GenericToggleEnum> _confAmbientOcclusion;
@@ -83,7 +82,6 @@ public class ModSettings
 	private static CycleConfigEntry<GenericToggleEnum> _confDockLights;
 	private static CycleConfigEntry<AntialiasingEnum> _confAntialiasing;
 	private static CycleConfigEntry<GenericQuantityEnum> _confMachineParticles;
-	// private static CycleConfigEntry<GenericToggleEnum> _confReduceOcean;
 
 	// Objects
 	private static Scene rootScene;

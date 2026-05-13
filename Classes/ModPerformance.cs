@@ -80,9 +80,6 @@ public class ModPerformance
 		dockMechLights.transform.Find("SpotLight").GetChild(0).GetChild(0).Find("Spot Light").GetComponent<Light>().shadows = input ? LightShadows.Soft : LightShadows.None;
 		dockMechLights.transform.Find("SpotLight (1)").GetChild(0).GetChild(0).Find("Spot Light").GetComponent<Light>().shadows = input ? LightShadows.Soft : LightShadows.None;
 		dockMechLights.transform.Find("SpotLight (2)").GetChild(0).GetChild(0).Find("Spot Light").GetComponent<Light>().shadows = input ? LightShadows.Soft : LightShadows.None;
-
-		// GameObject dockLights = dockRootObj.transform.Find("StageV3").Find("Stage_v3").Find("Lighting").gameObject;
-		// dockLights.transform.Find("topSpots")
 	}
 
 	public static void SetAntialiasing(ModSettings.AntialiasingEnum toSet)
@@ -117,59 +114,12 @@ public class ModPerformance
 		ApplyParticlesInRace();
 	}
 
-	// public static void ReduceOceanQuality(ModSettings.GenericToggleEnum toSet)
-	// {
-	// 	if (toSet == ModSettings.GenericToggleEnum.off)
-	// 	{
-
-	// 	}
-	// 	else
-	// 	{
-
-	// 		SettingsManager.SetOceanQuality();
-	// 	}
-	// }
-	// [HarmonyPostfix]
-	// [HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
-	// public static void ApplyOceanQuality()
-	// {
-	// 	bool input = ModSettings.confReduceOcean.Value == ModSettings.GenericToggleEnum.off;
-
-	// 	GameObject oceanRoot = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Ocean");
-	// 	OceanRenderer oceanTier1 = oceanRoot.transform.Find("Ocean_Tier1").GetComponent<OceanRenderer>();
-	// 	OceanRenderer oceanTier2 = oceanRoot.transform.Find("Ocean_Tier2").GetComponent<OceanRenderer>();
-	// 	OceanRenderer oceanTier3 = oceanRoot.transform.Find("Ocean_Tier3").GetComponent<OceanRenderer>();
-	// 	ShapeFFT waveShaper = oceanRoot.transform.Find("wave").GetComponent<ShapeFFT>();
-		
-	// 	oceanTier3._createDynamicWaveSim = input;
-	// 	oceanTier3._createFoamSim = input;
-	// 	oceanTier3._createSeaFloorDepthData = input;
-	// 	oceanTier3._geometryDownSampleFactor = input ? 2 : 4;
-	// 	oceanTier3._lodCount = input ? 6 : 1;
-	// 	// oceanTier3._maxScale = input ? 256 : 256;
-	// 	oceanTier3._minScale = input ? 8 : 64;
-
-	// 	oceanTier2._createDynamicWaveSim = input;
-	// 	oceanTier2._createFoamSim = input;
-	// 	oceanTier2._createSeaFloorDepthData = input;
-	// 	oceanTier2._geometryDownSampleFactor = input ? 4 : 8;
-	// 	// oceanTier2._maxScale = input ? 256 : 256;
-	// 	oceanTier2._lodCount = input ? 32 : 256;
-
-	// 	oceanTier1._geometryDownSampleFactor = input ? 4 : 16;
-	// 	oceanTier1._maxScale = input ? 256 : 512;
-	// 	oceanTier1._lodCount = input ? 64 : 512;
-
-	// 	waveShaper.enabled = input;
-	// }
-
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
 	public static void ApplyReflectionsInRace()
 	{
 		Scene scene = SceneManager.GetActiveScene();
 		GameObject[] rootObjs = scene.GetRootGameObjects();
-		// ReflectionProbe segmentProbe;
 
 		switch (scene.name)
 		{
@@ -185,14 +135,6 @@ public class ModPerformance
 					case ModSettings.GenericRaceOnlyEnum.off:
 						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[6].active = false;
 						rootObjs.First(item => item.name == "Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = false;
-						// Track probes turn themselves on by proximity.
-						// for (int i = 0; i < track.childCount; i++)
-						// {
-						// 	track.GetChild(i).TryGetComponent<ReflectionProbe>(out segmentProbe);
-						// 	if (segmentProbe)
-						// 		segmentProbe.enabled = false;
-						// 	segmentProbe = null;
-						// }
 						break;
 				}
 				break;
@@ -246,9 +188,9 @@ public class ModPerformance
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
-	// [HarmonyPatch(typeof(MachineDesignerMain), nameof(MachineDesignerMain.StartTestPlay))]
 	public static void ApplyParticlesInRace()
 	{
+		Plugin.Log.LogInfo("Design end");
 		Transform players = GetPlayersObj().transform;
 
 		for (int i = 0; i < players.childCount; i++)
@@ -267,12 +209,6 @@ public class ModPerformance
 			SetSpecificMachineParticles(playerVFX, toSet, myPlayer);
 		}
 	}
-
-	// [HarmonyPostfix]
-	// [HarmonyPatch(typeof(MachineDesignerMain), nameof(MachineDesignerMain.OpenDesigner))]
-	// [HarmonyPatch(typeof(MachineDesignerMain), nameof(MachineDesignerMain.EndTestPlay))]
-	// [HarmonyPatch(typeof(MachineDesignerMain), nameof(MachineDesignerMain.EndTestPlayByMenu))]
-	// public static void ApplyParticlesInDesign(){}
 
 	private static void SetSpecificMachineParticles(Transform playerVFX, ModSettings.GenericQuantityEnum toSet, bool isMainPlayer = false)
 	{

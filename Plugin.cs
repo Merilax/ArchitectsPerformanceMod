@@ -25,8 +25,8 @@ public class Plugin : BasePlugin
         Console.OutputEncoding = Encoding.UTF8;
 
         // Plugin startup logic
-        Log = BepInEx.Logging.Logger.CreateLogSource("Performance Mod");
-        Log.LogInfo($"Initializing plugin {MyPluginInfo.PLUGIN_GUID}...");
+        Log = BepInEx.Logging.Logger.CreateLogSource("ArchPerformanceMod");
+        Log.LogInfo($"Initializing plugin...");
 
         config = Config;
 
@@ -35,7 +35,7 @@ public class Plugin : BasePlugin
         harmony.PatchAll(typeof(ModSettings));
         harmony.PatchAll(typeof(ModPerformance));
 
-        Log.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is ready.");
+        Log.LogInfo($"Plugin is ready.");
     }
 }
 
