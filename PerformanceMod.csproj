@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>PerformanceMod</AssemblyName>
-    <Product>Performance Mod</Product>
+    <AssemblyName>Architect's Performance Mod</AssemblyName>
+    <Product>Architect's Performance Mod</Product>
     <Version>0.0.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
