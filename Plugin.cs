@@ -8,7 +8,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 
-namespace PerformanceMod;
+namespace ArchPerformanceMod;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInProcess("BREAK ARTS III.exe")]
@@ -31,6 +31,7 @@ public class Plugin : BasePlugin
         config = Config;
 
         var harmony = Harmony.CreateAndPatchAll(typeof(PluginInitializer));
+        harmony.PatchAll(typeof(QualityLevelPatch));
         harmony.PatchAll(typeof(GarageCameraPatch));
         harmony.PatchAll(typeof(ModSettings));
         harmony.PatchAll(typeof(ModPerformance));

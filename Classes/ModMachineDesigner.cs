@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace PerformanceMod;
+namespace ArchPerformanceMod;
 
 public class GarageCameraPatch
 {

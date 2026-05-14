@@ -1,5 +1,4 @@
 using System.Linq;
-using Crest;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,7 +6,7 @@ using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.SceneManagement;
 using UnityEngine.VFX;
 
-namespace PerformanceMod;
+namespace ArchPerformanceMod;
 
 public class ModPerformance
 {
@@ -20,9 +19,9 @@ public class ModPerformance
 		return SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Players");
 	}
 
-	public static void SetGlobalIllumination(ModSettings.GenericToggleEnum toSet)
+	public static void SetGlobalIllumination(ModSettings.ToggleEnum toSet)
 	{
-		bool input = toSet == ModSettings.GenericToggleEnum.on;
+		bool input = toSet == ModSettings.ToggleEnum.on;
 
 		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[12].active = input;
 
@@ -32,7 +31,7 @@ public class ModPerformance
 		visualEnv.skyAmbientMode.value = input ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
 	}
 
-	public static void SetReflections(ModSettings.GenericRaceOnlyEnum toSet)
+	public static void SetReflections(ModSettings.StrengthEnum toSet)
 	{
 		GameObject[] rootObjs = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects();
 		Transform postProcess = GetEnvironmentObj().transform.Find("Vol").Find("PostProcess");
@@ -40,38 +39,39 @@ public class ModPerformance
 		ReflectionProbe designProbe = rootObjs.First(item => item.name == "World_DesignOnly").transform.Find("Reflection Probe").GetComponent<ReflectionProbe>();
 		ReflectionProbe testTrackProbe = rootObjs.First(item => item.name == "World_TestPlay").transform.Find("Global Volume").GetComponent<ReflectionProbe>();
 
-		dockProbes.active = toSet == ModSettings.GenericRaceOnlyEnum.on;
-		designProbe.enabled = toSet == ModSettings.GenericRaceOnlyEnum.on || toSet == ModSettings.GenericRaceOnlyEnum.raceOnly;
-		testTrackProbe.enabled = toSet == ModSettings.GenericRaceOnlyEnum.on || toSet == ModSettings.GenericRaceOnlyEnum.raceOnly;
-		postProcess.GetComponent<Volume>().profile.components[3].active = toSet == ModSettings.GenericRaceOnlyEnum.on || toSet == ModSettings.GenericRaceOnlyEnum.raceOnly;
-		postProcess.GetComponent<Volume>().profile.components[13].active = toSet == ModSettings.GenericRaceOnlyEnum.on || toSet == ModSettings.GenericRaceOnlyEnum.raceOnly; // Screen SSR flare
+		dockProbes.active = toSet != ModSettings.StrengthEnum.aggresive;
+		designProbe.enabled = toSet != ModSettings.StrengthEnum.aggresive;
+		testTrackProbe.enabled = toSet != ModSettings.StrengthEnum.aggresive;
+		// postProcess.GetComponent<Volume>().profile.components[3].active = toSet == ModSettings.GenericStrengthEnum.on || toSet == ModSettings.GenericStrengthEnum.raceOnly;
+		// postProcess.GetComponent<Volume>().profile.components[13].active = toSet == ModSettings.GenericStrengthEnum.on || toSet == ModSettings.GenericStrengthEnum.raceOnly; // Screen SSR flare
 
 		if (SceneManager.GetActiveScene().name != "MainMenu") ApplyReflectionsInRace();
 	}
 
-	public static void SetChromaAberration(ModSettings.GenericToggleEnum toSet)
+	public static void SetChromaAberration(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[1].active = toSet == ModSettings.GenericToggleEnum.on;
+		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[1].active = toSet == ModSettings.ToggleEnum.on;
 	}
 
-	public static void SetAmbientOcclusion(ModSettings.GenericToggleEnum toSet)
+	public static void SetAmbientOcclusion(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[2].active = toSet == ModSettings.GenericToggleEnum.on;
+		// GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[2].active = toSet == ModSettings.GenericToggleEnum.on;
+
 	}
 
-	public static void SetVignette(ModSettings.GenericToggleEnum toSet)
+	public static void SetVignette(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[4].active = toSet == ModSettings.GenericToggleEnum.on;
+		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[4].active = toSet == ModSettings.ToggleEnum.on;
 	}
 
-	public static void SetShadowTones(ModSettings.GenericToggleEnum toSet)
+	public static void SetShadowTones(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[6].active = toSet == ModSettings.GenericToggleEnum.on;
+		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[6].active = toSet == ModSettings.ToggleEnum.on;
 	}
 
-	public static void SetDockLights(ModSettings.GenericToggleEnum toSet)
+	public static void SetDockLights(ModSettings.ToggleEnum toSet)
 	{
-		bool input = toSet == ModSettings.GenericToggleEnum.on;
+		bool input = toSet == ModSettings.ToggleEnum.on;
 
 		GameObject dockRootObj = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "World_PlayerDock");
 
@@ -101,15 +101,28 @@ public class ModPerformance
 		}
 	}
 
-	public static void SetMachineParticles(ModSettings.GenericQuantityEnum toSet)
+	public static void SetShadowQuality(ModSettings.StrengthEnum toSet)
+	{
+		switch (toSet)
+		{
+			case ModSettings.StrengthEnum.def:
+				HDRPReflectionHelper.ApplyShadowInitParams(256, 4096, 2048, 1);
+				break;
+			case ModSettings.StrengthEnum.optimized:
+				HDRPReflectionHelper.ApplyShadowInitParams(64, 1024, 1024, 1);
+				break;
+			case ModSettings.StrengthEnum.aggresive:
+				HDRPReflectionHelper.ApplyShadowInitParams(32, 512, 512, 1);
+				break;
+		}
+	}
+
+	public static void SetMachineParticles(ModSettings.QuantityEnum toSet)
 	{
 		Transform playerVFX = GetPlayersObj()?.transform.Find("MyPlayer").Find("Effects");
 		if (!playerVFX) return;
 
 		SetSpecificMachineParticles(playerVFX, toSet, true);
-
-		// Not really a machine particle but oh well.
-		// GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[2].active = toSet == ModSettings.GenericQuantityEnum.full || toSet == ModSettings.GenericQuantityEnum.reduced;
 
 		ApplyParticlesInRace();
 	}
@@ -127,12 +140,12 @@ public class ModPerformance
 				var track = rootObjs.First(item => item.name == "Circuit_01").transform;
 				switch (ModSettings.confReflections.Value)
 				{
-					case ModSettings.GenericRaceOnlyEnum.on:
-					case ModSettings.GenericRaceOnlyEnum.raceOnly:
+					case ModSettings.StrengthEnum.def:
+					case ModSettings.StrengthEnum.optimized:
 						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[6].active = true;
 						rootObjs.First(item => item.name == "Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = true;
 						break;
-					case ModSettings.GenericRaceOnlyEnum.off:
+					case ModSettings.StrengthEnum.aggresive:
 						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[6].active = false;
 						rootObjs.First(item => item.name == "Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = false;
 						break;
@@ -141,12 +154,12 @@ public class ModPerformance
 			case "Grass_02":
 				switch (ModSettings.confReflections.Value)
 				{
-					case ModSettings.GenericRaceOnlyEnum.on:
-					case ModSettings.GenericRaceOnlyEnum.raceOnly:
+					case ModSettings.StrengthEnum.def:
+					case ModSettings.StrengthEnum.optimized:
 						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[7].active = true;
 						rootObjs.First(item => item.name == "Global Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = true;
 						break;
-					case ModSettings.GenericRaceOnlyEnum.off:
+					case ModSettings.StrengthEnum.aggresive:
 						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[7].active = false;
 						rootObjs.First(item => item.name == "Global Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = false;
 						break;
@@ -163,12 +176,12 @@ public class ModPerformance
 			case "Moon_01":
 				switch (ModSettings.confReflections.Value)
 				{
-					case ModSettings.GenericRaceOnlyEnum.on:
-					case ModSettings.GenericRaceOnlyEnum.raceOnly:
+					case ModSettings.StrengthEnum.def:
+					case ModSettings.StrengthEnum.optimized:
 						rootObjs.First(item => item.name == "Lightings").transform.Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = true;
 						rootObjs.First(item => item.name == "Probes").active = true;
 						break;
-					case ModSettings.GenericRaceOnlyEnum.off:
+					case ModSettings.StrengthEnum.aggresive:
 						rootObjs.First(item => item.name == "Lightings").transform.Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = false;
 						rootObjs.First(item => item.name == "Probes").active = false;
 						break;
@@ -183,14 +196,13 @@ public class ModPerformance
 	public static void ToggleTrackProbes(ref ProbeManager.ProbeEntry e, ref bool active)
 	{
 		if (SceneManager.GetActiveScene().name != "MainMenu" && SceneManager.GetActiveScene().name != "Settings")
-			active = ModSettings.confReflections.Value == ModSettings.GenericRaceOnlyEnum.on || ModSettings.confReflections.Value == ModSettings.GenericRaceOnlyEnum.raceOnly;
+			active = ModSettings.confReflections.Value != ModSettings.StrengthEnum.aggresive;
 	}
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
 	public static void ApplyParticlesInRace()
 	{
-		Plugin.Log.LogInfo("Design end");
 		Transform players = GetPlayersObj().transform;
 
 		for (int i = 0; i < players.childCount; i++)
@@ -210,12 +222,12 @@ public class ModPerformance
 		}
 	}
 
-	private static void SetSpecificMachineParticles(Transform playerVFX, ModSettings.GenericQuantityEnum toSet, bool isMainPlayer = false)
+	private static void SetSpecificMachineParticles(Transform playerVFX, ModSettings.QuantityEnum toSet, bool isMainPlayer = false)
 	{
 		if (isMainPlayer)
 		{
 			GameObject worldFragments = playerVFX.Find("WorldFragments").gameObject;
-			worldFragments.active = toSet == ModSettings.GenericQuantityEnum.full;
+			worldFragments.active = toSet == ModSettings.QuantityEnum.full;
 		}
 		GameObject warpVFX = playerVFX.Find("WarpVFX").gameObject;
 		GameObject sandEffects = playerVFX.Find("SandEffects").gameObject;
@@ -227,28 +239,28 @@ public class ModPerformance
 		GameObject floatParticles = playerVFX.Find("Float_Around_Particle").gameObject;
 		GameObject velocityParticles = playerVFX.Find("VelocityParticle").gameObject;
 
-		warpVFX.active = toSet == ModSettings.GenericQuantityEnum.full;
-		sandEffects.active = toSet == ModSettings.GenericQuantityEnum.full;
-		waterEffects.active = toSet == ModSettings.GenericQuantityEnum.full;
-		waterInteraction.active = toSet == ModSettings.GenericQuantityEnum.full;
-		steamEffects.active = toSet == ModSettings.GenericQuantityEnum.full || toSet == ModSettings.GenericQuantityEnum.reduced;
-		structureEffects.active = toSet == ModSettings.GenericQuantityEnum.full || toSet == ModSettings.GenericQuantityEnum.reduced;
+		warpVFX.active = toSet == ModSettings.QuantityEnum.full;
+		sandEffects.active = toSet == ModSettings.QuantityEnum.full;
+		waterEffects.active = toSet == ModSettings.QuantityEnum.full;
+		waterInteraction.active = toSet == ModSettings.QuantityEnum.full;
+		steamEffects.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
+		structureEffects.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
 
-		breakEffects.active = toSet == ModSettings.GenericQuantityEnum.full || toSet == ModSettings.GenericQuantityEnum.reduced;
+		breakEffects.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
 		for (int i = 0; i < breakEffects.transform.childCount; i++)
-			breakEffects.transform.GetChild(i).gameObject.active = toSet == ModSettings.GenericQuantityEnum.full;
+			breakEffects.transform.GetChild(i).gameObject.active = toSet == ModSettings.QuantityEnum.full;
 
-		floatParticles.active = toSet == ModSettings.GenericQuantityEnum.full || toSet == ModSettings.GenericQuantityEnum.reduced;
-		floatParticles.transform.GetChild(0).gameObject.active = toSet == ModSettings.GenericQuantityEnum.full;
-		floatParticles.transform.GetChild(2).gameObject.active = toSet == ModSettings.GenericQuantityEnum.full;
+		floatParticles.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
+		floatParticles.transform.GetChild(0).gameObject.active = toSet == ModSettings.QuantityEnum.full;
+		floatParticles.transform.GetChild(2).gameObject.active = toSet == ModSettings.QuantityEnum.full;
 
-		velocityParticles.active = toSet == ModSettings.GenericQuantityEnum.full || toSet == ModSettings.GenericQuantityEnum.reduced;
-		velocityParticles.transform.GetChild(0).gameObject.active = toSet == ModSettings.GenericQuantityEnum.full;
-		velocityParticles.transform.GetChild(3).gameObject.active = toSet == ModSettings.GenericQuantityEnum.full;
-		velocityParticles.transform.GetChild(4).gameObject.active = toSet == ModSettings.GenericQuantityEnum.full;
+		velocityParticles.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
+		velocityParticles.transform.GetChild(0).gameObject.active = toSet == ModSettings.QuantityEnum.full;
+		velocityParticles.transform.GetChild(3).gameObject.active = toSet == ModSettings.QuantityEnum.full;
+		velocityParticles.transform.GetChild(4).gameObject.active = toSet == ModSettings.QuantityEnum.full;
 
 		GameObject mechBody = playerVFX.parent.Find("ArchitectureComplex").gameObject;
-		SetModuleParticles(mechBody.transform, toSet != ModSettings.GenericQuantityEnum.none);
+		SetModuleParticles(mechBody.transform, toSet != ModSettings.QuantityEnum.none);
 	}
 
 	private static void SetModuleParticles(Transform xform, bool toSet)

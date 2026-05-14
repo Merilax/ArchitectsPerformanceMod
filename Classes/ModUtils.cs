@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace PerformanceMod;
+namespace ArchPerformanceMod;
 
 public class Utils
 {

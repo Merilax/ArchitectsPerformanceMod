@@ -14,74 +14,82 @@ using BepInEx.Configuration;
 // using UnityEngine.VFX;
 // using Unity.Cinemachine;
 using System;
-using System.Collections;
-using System.Runtime.CompilerServices;
+using UnityEngine.Rendering;
 
-namespace PerformanceMod;
+namespace ArchPerformanceMod;
 
 public class ModSettings
 {
 	private static bool init = true;
-	public enum GenericToggleEnum { off, on }
-	public enum GenericTieredEnum { low, medium, high }
-	public enum GenericTieredWithOffEnum { off, low, medium, high }
-	public enum GenericRaceOnlyEnum { off, raceOnly, on }
-	public enum GenericQuantityEnum { none, reduced, full }
+	public enum ToggleEnum { off, on }
+	public enum TieredEnum { low, medium, high }
+	public enum TieredWithOffEnum { off, low, medium, high }
+	public enum RaceOnlyEnum { off, raceOnly, on }
+	public enum QuantityEnum { none, reduced, full }
 	public enum AntialiasingEnum { off, FXAA, MSAA, TAA }
-	public static readonly Dictionary<Enum, Localization.LocaleItems> valueTextRelation = new(){
-		{GenericToggleEnum.off, Localization.LocaleItems.setOff},
-		{GenericToggleEnum.on, Localization.LocaleItems.setOn},
+	public enum StrengthEnum { def, optimized, aggresive }
+	public static readonly Dictionary<Enum, Localization.Items> valueTextRelation = new(){
+		{ToggleEnum.off, Localization.Items.setOff},
+		{ToggleEnum.on, Localization.Items.setOn},
 
-		{GenericTieredEnum.low, Localization.LocaleItems.setLow},
-		{GenericTieredEnum.medium, Localization.LocaleItems.setMedium},
-		{GenericTieredEnum.high, Localization.LocaleItems.setHigh},
+		{TieredEnum.low, Localization.Items.setLow},
+		{TieredEnum.medium, Localization.Items.setMedium},
+		{TieredEnum.high, Localization.Items.setHigh},
 
-		{GenericTieredWithOffEnum.off, Localization.LocaleItems.setOff},
-		{GenericTieredWithOffEnum.low, Localization.LocaleItems.setLow},
-		{GenericTieredWithOffEnum.medium, Localization.LocaleItems.setMedium},
-		{GenericTieredWithOffEnum.high, Localization.LocaleItems.setHigh},
+		{TieredWithOffEnum.off, Localization.Items.setOff},
+		{TieredWithOffEnum.low, Localization.Items.setLow},
+		{TieredWithOffEnum.medium, Localization.Items.setMedium},
+		{TieredWithOffEnum.high, Localization.Items.setHigh},
 
-		{GenericRaceOnlyEnum.off, Localization.LocaleItems.setOff},
-		{GenericRaceOnlyEnum.raceOnly, Localization.LocaleItems.setRaceOnly},
-		{GenericRaceOnlyEnum.on, Localization.LocaleItems.setOn},
+		{RaceOnlyEnum.off, Localization.Items.setOff},
+		{RaceOnlyEnum.raceOnly, Localization.Items.setRaceOnly},
+		{RaceOnlyEnum.on, Localization.Items.setOn},
 
-		{AntialiasingEnum.off, Localization.LocaleItems.setOff},
-		{AntialiasingEnum.FXAA, Localization.LocaleItems.FXAA},
-		{AntialiasingEnum.MSAA, Localization.LocaleItems.MSAA},
-		{AntialiasingEnum.TAA, Localization.LocaleItems.TAA},
+		{AntialiasingEnum.off, Localization.Items.setOff},
+		{AntialiasingEnum.FXAA, Localization.Items.FXAA},
+		{AntialiasingEnum.MSAA, Localization.Items.MSAA},
+		{AntialiasingEnum.TAA, Localization.Items.TAA},
 
-		{GenericQuantityEnum.none, Localization.LocaleItems.none},
-		{GenericQuantityEnum.reduced, Localization.LocaleItems.reduced},
-		{GenericQuantityEnum.full, Localization.LocaleItems.full},
+		{StrengthEnum.def, Localization.Items.def},
+		{StrengthEnum.optimized, Localization.Items.optimized},
+		{StrengthEnum.aggresive, Localization.Items.aggresive},
+
+		{QuantityEnum.none, Localization.Items.none},
+		{QuantityEnum.reduced, Localization.Items.reduced},
+		{QuantityEnum.full, Localization.Items.full},
 	};
 
-	private static readonly IReadOnlyList<GenericToggleEnum> genericToggleValues = [GenericToggleEnum.off, GenericToggleEnum.on];
-	private static readonly IReadOnlyList<GenericTieredEnum> genericTierValues = [GenericTieredEnum.low, GenericTieredEnum.medium, GenericTieredEnum.high];
-	private static readonly IReadOnlyList<GenericTieredWithOffEnum> genericTierValuesWithDisabled = [GenericTieredWithOffEnum.off, GenericTieredWithOffEnum.low, GenericTieredWithOffEnum.medium, GenericTieredWithOffEnum.high];
-	private static readonly IReadOnlyList<GenericRaceOnlyEnum> genericRaceOnlyValues = [GenericRaceOnlyEnum.off, GenericRaceOnlyEnum.raceOnly, GenericRaceOnlyEnum.on];
+	private static readonly IReadOnlyList<ToggleEnum> genericToggleValues = [ToggleEnum.off, ToggleEnum.on];
+	private static readonly IReadOnlyList<TieredEnum> genericTierValues = [TieredEnum.low, TieredEnum.medium, TieredEnum.high];
+	private static readonly IReadOnlyList<TieredWithOffEnum> genericTierValuesWithDisabled = [TieredWithOffEnum.off, TieredWithOffEnum.low, TieredWithOffEnum.medium, TieredWithOffEnum.high];
+	private static readonly IReadOnlyList<RaceOnlyEnum> genericRaceOnlyValues = [RaceOnlyEnum.off, RaceOnlyEnum.raceOnly, RaceOnlyEnum.on];
 	private static readonly IReadOnlyList<AntialiasingEnum> antialiasingValues = [AntialiasingEnum.off, AntialiasingEnum.FXAA, AntialiasingEnum.MSAA, AntialiasingEnum.TAA];
-	private static readonly IReadOnlyList<GenericQuantityEnum> genericQuantityValues = [GenericQuantityEnum.none, GenericQuantityEnum.reduced, GenericQuantityEnum.full];
+	private static readonly IReadOnlyList<StrengthEnum> genericStrengthValues = [StrengthEnum.def, StrengthEnum.optimized, StrengthEnum.aggresive];
+	private static readonly IReadOnlyList<QuantityEnum> genericQuantityValues = [QuantityEnum.none, QuantityEnum.reduced, QuantityEnum.full];
 
 	// Config entries
 	private static ConfigFile config;
-	public static ConfigEntry<GenericToggleEnum> confGlobalIllumination;
-	public static ConfigEntry<GenericRaceOnlyEnum> confReflections;
-	public static ConfigEntry<GenericToggleEnum> confAmbientOcclusion;
-	public static ConfigEntry<GenericToggleEnum> confChromaAberration;
-	public static ConfigEntry<GenericToggleEnum> confVignette;
-	public static ConfigEntry<GenericToggleEnum> confShadowTones;
-	public static ConfigEntry<GenericToggleEnum> confDockLights;
+	public static ConfigEntry<ToggleEnum> confGlobalIllumination;
+	public static ConfigEntry<StrengthEnum> confReflections;
+	public static ConfigEntry<ToggleEnum> confAmbientOcclusion;
+	public static ConfigEntry<StrengthEnum> confShadowQuality;
+	public static ConfigEntry<ToggleEnum> confChromaAberration;
+	public static ConfigEntry<ToggleEnum> confVignette;
+	public static ConfigEntry<ToggleEnum> confShadowTones;
+	public static ConfigEntry<ToggleEnum> confDockLights;
 	public static ConfigEntry<AntialiasingEnum> confAntialiasing;
-	public static ConfigEntry<GenericQuantityEnum> confMachineParticles;
-	private static CycleConfigEntry<GenericToggleEnum> _confGlobalIllumination;
-	private static CycleConfigEntry<GenericRaceOnlyEnum> _confReflections;
-	private static CycleConfigEntry<GenericToggleEnum> _confAmbientOcclusion;
-	private static CycleConfigEntry<GenericToggleEnum> _confChromaAberration;
-	private static CycleConfigEntry<GenericToggleEnum> _confVignette;
-	private static CycleConfigEntry<GenericToggleEnum> _confShadowTones;
-	private static CycleConfigEntry<GenericToggleEnum> _confDockLights;
+	public static ConfigEntry<QuantityEnum> confMachineParticles;
+
+	private static CycleConfigEntry<ToggleEnum> _confGlobalIllumination;
+	private static CycleConfigEntry<StrengthEnum> _confReflections;
+	private static CycleConfigEntry<StrengthEnum> _confShadowQuality;
+	private static CycleConfigEntry<ToggleEnum> _confAmbientOcclusion;
+	private static CycleConfigEntry<ToggleEnum> _confChromaAberration;
+	private static CycleConfigEntry<ToggleEnum> _confVignette;
+	private static CycleConfigEntry<ToggleEnum> _confShadowTones;
+	private static CycleConfigEntry<ToggleEnum> _confDockLights;
 	private static CycleConfigEntry<AntialiasingEnum> _confAntialiasing;
-	private static CycleConfigEntry<GenericQuantityEnum> _confMachineParticles;
+	private static CycleConfigEntry<QuantityEnum> _confMachineParticles;
 
 	// Objects
 	private static Scene rootScene;
@@ -138,8 +146,8 @@ public class ModSettings
 
 		GameObject textLabel = btn.transform.GetChild(1).gameObject;
 		textLabel.GetComponent<LocalizeStringEvent>().enabled = false;
-		textLabel.GetComponent<TextMeshProUGUI>().text = Localization.GetText(Localization.LocaleItems.settingsModButton);
-		Localization.OnLocaleChanged += () => { if (textLabel) textLabel.GetComponent<TextMeshProUGUI>().text = Localization.GetText(Localization.LocaleItems.settingsModButton); };
+		textLabel.GetComponent<TextMeshProUGUI>().text = Localization.GetText(Localization.Items.settingsModButton);
+		Localization.OnLocaleChanged += () => { if (textLabel) textLabel.GetComponent<TextMeshProUGUI>().text = Localization.GetText(Localization.Items.settingsModButton); };
 
 		btn.GetComponent<Button>().onClick.RemoveAllListeners();
 		btn.GetComponent<Button>().onClick.AddListener((System.Action)(() => OnShowModSettings()));
@@ -187,16 +195,17 @@ public class ModSettings
 		GameObject row = content.transform.GetChild(0).gameObject;
 
 		// Populate with custom settings
-		List<Localization.LocaleItems> buttons = [
-			Localization.LocaleItems.SET_GI_ENTRY, // Very heavy
-			Localization.LocaleItems.SET_AO_ENTRY, // Free
-			Localization.LocaleItems.SET_SSR_ENTRY, // Light, Very light in races
-			Localization.LocaleItems.SET_CHROMAABERRATION_ENTRY, // Free
-			Localization.LocaleItems.SET_VIGNETTE_ENTRY, // Free
-			Localization.LocaleItems.SET_SHADOWTONES_ENTRY, // Free
-			Localization.LocaleItems.SET_DOCKLIGHTS_ENTRY, // Light
-			Localization.LocaleItems.SET_AA_ENTRY, // Light
-			Localization.LocaleItems.SET_MACHINEPARTICLES_ENTRY, // Light
+		List<Localization.Items> buttons = [
+			Localization.Items.SET_GI_ENTRY, // Very heavy
+			Localization.Items.SET_SSR_ENTRY, // Light
+			Localization.Items.SET_SHADOWQUALITY_ENTRY, // Medium
+			Localization.Items.SET_DOCKLIGHTS_ENTRY, // Heavy
+			Localization.Items.SET_AO_ENTRY, // Free
+			Localization.Items.SET_CHROMAABERRATION_ENTRY, // Free
+			Localization.Items.SET_VIGNETTE_ENTRY, // Free
+			Localization.Items.SET_SHADOWTONES_ENTRY, // Free
+			Localization.Items.SET_AA_ENTRY, // Light
+			Localization.Items.SET_MACHINEPARTICLES_ENTRY, // Light
 		];
 		for (int i = 0; i < content.transform.childCount; i++)
 		{
@@ -219,7 +228,7 @@ public class ModSettings
 		return obj;
 	}
 
-	public static GameObject DuplicateSettingRow(GameObject origin, Localization.LocaleItems title)
+	public static GameObject DuplicateSettingRow(GameObject origin, Localization.Items title)
 	{
 		GameObject obj = GameObject.Instantiate(origin);
 		obj.name = title.ToString();
@@ -237,32 +246,35 @@ public class ModSettings
 		dynamic entry = null;
 		switch (title)
 		{
-			case Localization.LocaleItems.SET_GI_ENTRY:
-				entry = _confGlobalIllumination = new CycleConfigEntry<GenericToggleEnum>(confGlobalIllumination, genericToggleValues, valueText);
+			case Localization.Items.SET_GI_ENTRY:
+				entry = _confGlobalIllumination = new CycleConfigEntry<ToggleEnum>(confGlobalIllumination, genericToggleValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_SSR_ENTRY:
-				entry = _confReflections = new CycleConfigEntry<GenericRaceOnlyEnum>(confReflections, genericRaceOnlyValues, valueText);
+			case Localization.Items.SET_SSR_ENTRY:
+				entry = _confReflections = new CycleConfigEntry<StrengthEnum>(confReflections, genericStrengthValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_AO_ENTRY:
-				entry = _confAmbientOcclusion = new CycleConfigEntry<GenericToggleEnum>(confAmbientOcclusion, genericToggleValues, valueText);
+			case Localization.Items.SET_SHADOWQUALITY_ENTRY:
+				entry = _confShadowQuality = new CycleConfigEntry<StrengthEnum>(confShadowQuality, genericStrengthValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_CHROMAABERRATION_ENTRY:
-				entry = _confChromaAberration = new CycleConfigEntry<GenericToggleEnum>(confChromaAberration, genericToggleValues, valueText);
+			case Localization.Items.SET_AO_ENTRY:
+				entry = _confAmbientOcclusion = new CycleConfigEntry<ToggleEnum>(confAmbientOcclusion, genericToggleValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_VIGNETTE_ENTRY:
-				entry = _confVignette = new CycleConfigEntry<GenericToggleEnum>(confVignette, genericToggleValues, valueText);
+			case Localization.Items.SET_CHROMAABERRATION_ENTRY:
+				entry = _confChromaAberration = new CycleConfigEntry<ToggleEnum>(confChromaAberration, genericToggleValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_SHADOWTONES_ENTRY:
-				entry = _confShadowTones = new CycleConfigEntry<GenericToggleEnum>(confShadowTones, genericToggleValues, valueText);
+			case Localization.Items.SET_VIGNETTE_ENTRY:
+				entry = _confVignette = new CycleConfigEntry<ToggleEnum>(confVignette, genericToggleValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_DOCKLIGHTS_ENTRY:
-				entry = _confDockLights = new CycleConfigEntry<GenericToggleEnum>(confDockLights, genericToggleValues, valueText);
+			case Localization.Items.SET_SHADOWTONES_ENTRY:
+				entry = _confShadowTones = new CycleConfigEntry<ToggleEnum>(confShadowTones, genericToggleValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_AA_ENTRY:
+			case Localization.Items.SET_DOCKLIGHTS_ENTRY:
+				entry = _confDockLights = new CycleConfigEntry<ToggleEnum>(confDockLights, genericToggleValues, valueText);
+				break;
+			case Localization.Items.SET_AA_ENTRY:
 				entry = _confAntialiasing = new CycleConfigEntry<AntialiasingEnum>(confAntialiasing, antialiasingValues, valueText);
 				break;
-			case Localization.LocaleItems.SET_MACHINEPARTICLES_ENTRY:
-				entry = _confMachineParticles = new CycleConfigEntry<GenericQuantityEnum>(confMachineParticles, genericQuantityValues, valueText);
+			case Localization.Items.SET_MACHINEPARTICLES_ENTRY:
+				entry = _confMachineParticles = new CycleConfigEntry<QuantityEnum>(confMachineParticles, genericQuantityValues, valueText);
 				break;
 		}
 
@@ -285,6 +297,7 @@ public class ModSettings
 
 		_confGlobalIllumination.Cancel();
 		_confReflections.Cancel();
+		_confShadowQuality.Cancel();
 		_confAmbientOcclusion.Cancel();
 		_confChromaAberration.Cancel();
 		_confVignette.Cancel();
@@ -309,15 +322,16 @@ public class ModSettings
 		Localization.SetLocale(); // Config.Language
 		config = Plugin.config;
 
-		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", GenericToggleEnum.on, "Toggles Global Illumination, volumetric lighting within the main world. Cost: Very expensive.");
-		confReflections = config.Bind("Graphics", "Reflections", GenericRaceOnlyEnum.on, "Toggles SSR reflecting surfaces. Cost: Light.");
-		confAmbientOcclusion = config.Bind("Graphics", "AmbientOcclusion", GenericToggleEnum.on, "Toggles Ambient Occlusion. Cost: Very light.");
-		confChromaAberration = config.Bind("Graphics", "ChromaticAberration", GenericToggleEnum.on, "Toggles Chromatic Aberration. Cost: Very light.");
-		confVignette = config.Bind("Graphics", "Vignette", GenericToggleEnum.on, "Toggles a vignette effect. Cost: Very light.");
-		confShadowTones = config.Bind("Graphics", "ShadowToneMapping", GenericToggleEnum.on, "Toggles remapping of shadow midtones and highlights. Cost: Very light.");
-		confDockLights = config.Bind("Graphics", "DockLights", GenericToggleEnum.on, "Sets the quality of lights in the player dock. Useful if GI and SSR are off, which makes some shadows look weird. Cost: Light.");
+		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", ToggleEnum.on, "Toggles Global Illumination, volumetric lighting within the main world. Cost: Very expensive.");
+		confReflections = config.Bind("Graphics", "Reflections", StrengthEnum.def, "Toggles SSR and reflection probes surfaces. Cost: Light.");
+		confShadowQuality = config.Bind("Graphics", "ShadowQuality", StrengthEnum.def, "Adjusts quality of all shadows. Cost: Medium.");
+		confAmbientOcclusion = config.Bind("Graphics", "AmbientOcclusion", ToggleEnum.on, "Toggles Ambient Occlusion. Cost: Very light.");
+		confChromaAberration = config.Bind("Graphics", "ChromaticAberration", ToggleEnum.on, "Toggles Chromatic Aberration. Cost: Very light.");
+		confVignette = config.Bind("Graphics", "Vignette", ToggleEnum.on, "Toggles a vignette effect. Cost: Very light.");
+		confShadowTones = config.Bind("Graphics", "ShadowToneMapping", ToggleEnum.on, "Toggles remapping of shadow midtones and highlights. Cost: Very light.");
+		confDockLights = config.Bind("Graphics", "DockLights", ToggleEnum.on, "Sets the quality of lights in the player dock. Useful if GI and SSR are off, which makes some shadows look weird. Cost: Light.");
 		confAntialiasing = config.Bind("Graphics", "AntiAliasing", AntialiasingEnum.MSAA, "Sets the AntiAliasing type to use, if any. Cost: Very light.");
-		confMachineParticles = config.Bind("Graphics", "MachineParticles", GenericQuantityEnum.full, "Sets the amount of particles and other machine-related effects. Cost: Light.");
+		confMachineParticles = config.Bind("Graphics", "MachineParticles", QuantityEnum.full, "Sets the amount of particles and other machine-related effects. Cost: Light.");
 
 		ApplyChanges();
 
@@ -328,6 +342,7 @@ public class ModSettings
 	{
 		_confGlobalIllumination.Confirm();
 		_confReflections.Confirm();
+		_confShadowQuality.Confirm();
 		_confAmbientOcclusion.Confirm();
 		_confChromaAberration.Confirm();
 		_confVignette.Confirm();
@@ -347,7 +362,8 @@ public class ModSettings
 	{
 		ModPerformance.SetGlobalIllumination(confGlobalIllumination.Value);
 		ModPerformance.SetReflections(confReflections.Value);
-		ModPerformance.SetAmbientOcclusion(confAmbientOcclusion.Value);
+		ModPerformance.SetShadowQuality(confShadowQuality.Value);
+		// ModPerformance.SetAmbientOcclusion(confAmbientOcclusion.Value);
 		ModPerformance.SetChromaAberration(confChromaAberration.Value);
 		ModPerformance.SetVignette(confVignette.Value);
 		ModPerformance.SetShadowTones(confShadowTones.Value);
@@ -356,25 +372,30 @@ public class ModSettings
 		if (!init) ModPerformance.SetMachineParticles(confMachineParticles.Value);
 
 		init = false;
-	}
 
-	[HarmonyPostfix]
-	// [HarmonyPatch(typeof(MachineDataManager), nameof(MachineDataManager.LoadMachine))] // Doesn't work
-    [HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.ShiftMainMenu))]
-	public static void LoadAfterInit()
-	{
-		ModPerformance.SetDockLights(confDockLights.Value);
-		ModPerformance.SetMachineParticles(confMachineParticles.Value);
-	}
+		if (QualityLevelPatch.QualityLevelChanged)
+		{
+			HDRPReflectionHelper.InvalidateCache();
+			QualityLevelPatch.QualityLevelChanged = false;
+		}
+		HDRPReflectionHelper.CheckHdrpAssetStale();
+		HDRPReflectionHelper.CacheHDRPReflection();
 
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(Scene_Settings), nameof(Scene_Settings.ApplySettings_Graphic))]
-	public static void RescaleUI()
-	{
-		// Why this isn't automatically handled is beyond me.
-		settingsButton.transform.localScale = new Vector3(1, 1, 1);
-		applyButton.transform.localScale = new Vector3(1, 1, 1);
-		settingsView.transform.localScale = new Vector3(1, 1, 1);
+		GraphicsSettings.useScriptableRenderPipelineBatching = true;
+		QualitySettings.lodBias = 0.75f;
+
+		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch(
+			confReflections.Value != StrengthEnum.def, // SSR
+			confAmbientOcclusion.Value == ToggleEnum.off, // Ambient Occlusion
+			true, // Volumetrics
+			true, // Vol Clouds
+			true, // Subsurface Scattering
+			true, // Decals (already disabled by default)
+			confMachineParticles.Value != QuantityEnum.full, // Distortion
+			confReflections.Value != StrengthEnum.def, // SSR Transparency
+			confReflections.Value != StrengthEnum.def, // Screen Space Lens Flare
+			confReflections.Value != StrengthEnum.def  // Data Driven Lens Flare
+		);
 	}
 }
 
