@@ -16,13 +16,6 @@ It also extends the boundaries of the machine designer camera.
 > This may take a minute, so __please be patient__.
 > You will know the mod was installed correctly if you see the mod's name in the bottom left corner after the game has finished loading.
 
-# Known issues:
-- Modded UI only responds to mouse inputs.
-- Dock lights are always enabled upon starting the game. Just opening and closing the settings menu correctly applies the modded directive.
-
-# Planned features:
-- Complete replacement of the ocean for a static solid plane, as an extreme performance measure.
-
 # Frequently Asked Questions:
 ### Why is the mod not doing anything?
 > - Verify that the mod was installed. You will see its signature in the main menu, in the bottom left corner.
