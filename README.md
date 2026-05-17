@@ -9,7 +9,7 @@ It also extends the boundaries of the machine designer camera.
 > Download a __specific__ [BepInEx build](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) and unzip the contents directly inside the game folder.
 
 ### 2. Install the mod.
-> Download the the [latest ZIP file from GitHub releases](https://github.com/Merilax/ArchitectsPerformanceMod/releases/tag/v1.0.0). Inside there will be a single DLL file. Unzip it and place it in `Break Arts III\BepInEx\plugins\ArchitectsPerformanceMod.dll`.
+> Download the the [latest ZIP file from GitHub releases](https://github.com/Merilax/ArchitectsPerformanceMod/releases/tag/v1.1.0). Inside there will be a single DLL file. Unzip it and place it in `Break Arts III\BepInEx\plugins\ArchitectsPerformanceMod.dll`.
 
 ### 3. Run the game!
 > The first time you start the game after installing BepInEx, or when the game updates, it will generate some necessary files for mods to function.
