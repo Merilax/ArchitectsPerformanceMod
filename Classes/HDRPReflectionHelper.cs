@@ -74,7 +74,7 @@ internal static class HDRPReflectionHelper
     private static void DebugLog(string msg)
     {
         if (Debug)
-            Plugin.Log.LogInfo($"[Debug] {msg}");
+            DebugLog($"[Debug] {msg}");
     }
 
     // ==================================================================
@@ -103,7 +103,7 @@ internal static class HDRPReflectionHelper
             Type concreteType = ResolveIl2CppConcreteType(pipelineAsset);
             if (concreteType != null && concreteType != t)
             {
-                Plugin.Log.LogInfo(
+                DebugLog(
                     $"IL2CPP type resolution: GetType()={t.Name}, " +
                     $"concrete IL2CPP type={concreteType.Name}. Using concrete type.");
                 t = concreteType;
@@ -112,7 +112,7 @@ internal static class HDRPReflectionHelper
                 if (castAsset != null && castAsset != (object)pipelineAsset)
                 {
                     HdrpAssetRef = castAsset;
-                    Plugin.Log.LogInfo(
+                    DebugLog(
                         $"HDRP Asset re-wrapped: managed type now {castAsset.GetType().Name}");
                 }
             }
@@ -122,7 +122,7 @@ internal static class HDRPReflectionHelper
             try
             {
                 _cachedHdrpAssetInstanceId = pipelineAsset.GetInstanceID();
-                Plugin.Log.LogInfo(
+                DebugLog(
                     $"HDRP Asset cached: '{pipelineAsset.name}' (instanceID={_cachedHdrpAssetInstanceId})");
             }
             catch
@@ -140,7 +140,7 @@ internal static class HDRPReflectionHelper
                     if (RenderPipelineSettingsRef != null)
                     {
                         RenderPipelineSettingsType = RenderPipelineSettingsRef.GetType();
-                        Plugin.Log.LogInfo(
+                        DebugLog(
                             $"RenderPipelineSettings resolved: type={RenderPipelineSettingsType.FullName}");
                         CacheSupportFlagProperties();
                         CacheShadowInitProperties();
@@ -231,7 +231,7 @@ internal static class HDRPReflectionHelper
             string maxAreaVal = PropMaxAreaShadowMapResolution != null ? SafeGetInt(PropMaxAreaShadowMapResolution, HdShadowInitParamsRef).ToString() : "N/A";
             string areaFilterVal = PropAreaShadowFilteringQuality != null ? SafeGetEnum(PropAreaShadowFilteringQuality, HdShadowInitParamsRef) : "N/A";
 
-            Plugin.Log.LogInfo(
+            DebugLog(
                 $"HDShadowInitParams cached: maxShadowRequests={maxReqVal}, " +
                 $"maxDirShadowRes={maxDirVal}, maxPuncShadowRes={maxPuncVal}, " +
                 $"maxAreaShadowRes={maxAreaVal}, areaFilterQuality={areaFilterVal}");
@@ -262,7 +262,7 @@ internal static class HDRPReflectionHelper
                 if (RenderPipelineSettingsRef != null)
                 {
                     RenderPipelineSettingsType = RenderPipelineSettingsRef.GetType();
-                    Plugin.Log.LogInfo(
+                    DebugLog(
                         $"RenderPipelineSettings resolved via m_RenderPipelineSettings field: " +
                         $"type={RenderPipelineSettingsType.FullName}");
                     CacheSupportFlagProperties();
@@ -294,7 +294,7 @@ internal static class HDRPReflectionHelper
         string sssVal = PropSupportSubsurfaceScattering != null ? SafeGetBool(PropSupportSubsurfaceScattering, RenderPipelineSettingsRef).ToString() : "N/A";
         string decalsVal = PropSupportDecals != null ? SafeGetBool(PropSupportDecals, RenderPipelineSettingsRef).ToString() : "N/A";
 
-        Plugin.Log.LogInfo(
+        DebugLog(
             $"HDRP Asset: {assetName} ({HdrpAssetType?.Name}). " +
             $"RenderPipelineSettings: {(RenderPipelineSettingsRef != null ? "resolved" : "NOT FOUND")}. " +
             $"Key flags: supportSSAO={ssaoVal}, " +
@@ -483,7 +483,7 @@ internal static class HDRPReflectionHelper
         {
             WriteShadowInitParamsBack();
             WriteSettingsBackToAsset();
-            Plugin.Log.LogInfo("Shadow init params: wrote changes back to HDRP Asset.");
+            DebugLog("Shadow init params: wrote changes back to HDRP Asset.");
         }
         else
         {
@@ -585,7 +585,7 @@ internal static class HDRPReflectionHelper
             }
 
             prop.SetValue(HdShadowInitParamsRef, effectiveEnum);
-            Plugin.Log.LogInfo($"Shadow param: {name} = {currentStr} -> {effectiveStr} (target was {targetValue})");
+            DebugLog($"Shadow param: {name} = {currentStr} -> {effectiveStr} (target was {targetValue})");
             return true;
         }
         catch (Exception ex)
@@ -658,7 +658,7 @@ internal static class HDRPReflectionHelper
             string currentName = "unknown";
             try { currentName = currentAsset.name; } catch { }
 
-            Plugin.Log.LogInfo(
+            DebugLog(
                 $"[AssetStaleCheck] HDRP Asset CHANGED! " +
                 $"Cached instanceID={_cachedHdrpAssetInstanceId}, " +
                 $"Current='{currentName}' (instanceID={currentId}). " +
@@ -725,11 +725,11 @@ internal static class HDRPReflectionHelper
     {
         if (RenderPipelineSettingsRef == null || RenderPipelineSettingsType == null)
         {
-            Plugin.Log.LogInfo("[ShadowDiscover] RenderPipelineSettings not available.");
+            DebugLog("[ShadowDiscover] RenderPipelineSettings not available.");
             return;
         }
 
-        Plugin.Log.LogInfo("[ShadowDiscover] === RenderPipelineSettings shadow-related properties ===");
+        DebugLog("[ShadowDiscover] === RenderPipelineSettings shadow-related properties ===");
 
         try
         {
@@ -744,7 +744,7 @@ internal static class HDRPReflectionHelper
                 try { val = prop.GetValue(RenderPipelineSettingsRef)?.ToString() ?? "null"; }
                 catch (Exception ex) { val = $"<error: {ex.Message}>"; }
 
-                Plugin.Log.LogInfo(
+                DebugLog(
                     $"[ShadowDiscover] {RenderPipelineSettingsType.Name}.{prop.Name} " +
                     $"({prop.PropertyType.Name}) = {val}");
 
@@ -767,7 +767,7 @@ internal static class HDRPReflectionHelper
             Plugin.Log.LogWarning($"[ShadowDiscover] Error enumerating properties: {ex.Message}");
         }
 
-        Plugin.Log.LogInfo("[ShadowDiscover] === End shadow property dump ===");
+        DebugLog("[ShadowDiscover] === End shadow property dump ===");
     }
 
     private static void DumpNestedShadowProps(object obj, string parentName)
@@ -784,7 +784,7 @@ internal static class HDRPReflectionHelper
                 try { val = prop.GetValue(obj)?.ToString() ?? "null"; }
                 catch (Exception ex) { val = $"<error: {ex.Message}>"; }
 
-                Plugin.Log.LogInfo(
+                DebugLog(
                     $"[ShadowDiscover]   {parentName}.{prop.Name} " +
                     $"({prop.PropertyType.Name}) = {val}");
             }
@@ -1013,7 +1013,7 @@ internal static class QualityLevelPatch
             QualityLevelChanged = true;
             LastSetLevel = index;
 
-            Plugin.Log.LogInfo(
+            Plugin.LogInfo(
                 $"[QualityLevelPatch] Game changed quality level to {index}. " +
                 "Will invalidate caches and reapply optimizations on next frame.");
         }

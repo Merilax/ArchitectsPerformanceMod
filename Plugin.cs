@@ -16,17 +16,16 @@ namespace ArchPerformanceMod;
 public class Plugin : BasePlugin
 {
     internal static new ManualLogSource Log;
+    private static readonly bool verboseLogging = false;
     public static ConfigFile config;
-    public static CycleConfigEntry<bool> _myToggle;
-
     public override void Load()
     {
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = Encoding.UTF8;
 
         // Plugin startup logic
-        Log = BepInEx.Logging.Logger.CreateLogSource("ArchPerformanceMod");
-        Log.LogInfo($"Initializing plugin...");
+        Log = BepInEx.Logging.Logger.CreateLogSource("ArchPerform");
+        Log.LogInfo($"Loading plugin patches...");
 
         config = Config;
 
@@ -35,8 +34,16 @@ public class Plugin : BasePlugin
         harmony.PatchAll(typeof(GarageCameraPatch));
         harmony.PatchAll(typeof(ModSettings));
         harmony.PatchAll(typeof(ModPerformance));
+        harmony.PatchAll(typeof(ModGameplay));
+        // harmony.PatchAll(typeof(TestPatch));
 
-        Log.LogInfo($"Plugin is ready.");
+        Log.LogInfo($"Done.");
+    }
+
+    public static void LogInfo(object data) => Log.LogInfo(data);
+    public static void LogDebug(object data)
+    {
+        if (verboseLogging) Log.LogInfo(data);
     }
 }
 
@@ -44,14 +51,26 @@ public class PluginInitializer
 {
     private static TMP_FontAsset mainFont;
     private static Material mainFontMaterial;
-    private static bool once = false;
+    private static GameObject modSignature1;
+    private static GameObject modSignature2;
+    private static bool init = false;
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Start))]
+    public static void Initialize(ref Scene_MainMenu __instance)
+    {
+        if (init) return;
+        Plugin.LogInfo($"Preparing mod...");
+
+        Cursor.lockState = CursorLockMode.Confined;
+
+        AddModSignature(ref __instance);
+
+        init = true;
+        Plugin.LogInfo($"Mod initialized.");
+    }
     public static void AddModSignature(ref Scene_MainMenu __instance)
     {
-        if (once) return;
-
         Transform introMenu = __instance.MainMenuRoot.transform.Find("StartMenu");
         Transform mainMenu = __instance.MainMenuRoot.transform.Find("MainMenu_All");
 
@@ -62,10 +81,12 @@ public class PluginInitializer
         RectTransform rect = signatureObj.AddComponent<RectTransform>();
         TextMeshProUGUI signature = signatureObj.AddComponent<TextMeshProUGUI>();
         signatureObj.transform.SetParent(introMenu);
+        signature.name = "Mod Signature";
         signature.text = "Architect's Optimizations " + MyPluginInfo.PLUGIN_VERSION;
         signature.fontSize = 16f;
         signature.font = mainFont;
         signature.fontMaterial = mainFontMaterial;
+        signature.transform.localScale = Vector3.one;
 
         rect.pivot = Vector2.zero;
         rect.anchorMin = Vector2.zero;
@@ -76,12 +97,24 @@ public class PluginInitializer
         GameObject clone = GameObject.Instantiate(signatureObj);
         RectTransform cloneRect = clone.GetComponent<RectTransform>();
         clone.transform.SetParent(mainMenu);
+        clone.name = "Mod Signature";
+        clone.transform.localScale = Vector3.one;
+
         cloneRect.pivot = Vector2.zero;
         cloneRect.anchorMin = Vector2.zero;
         cloneRect.anchorMax = new Vector2(1, 0);
         cloneRect.offsetMax = new Vector2(0, 25);
         cloneRect.offsetMin = new Vector2(25, 0);
 
-        once = true;
+        modSignature1 = signatureObj;
+        modSignature2 = clone;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(SettingsManager), nameof(SettingsManager.SetResolution))]
+    public static void RescaleUI()
+    {
+        Utils.RescaleUI(modSignature1);
+        Utils.RescaleUI(modSignature2);
     }
 }

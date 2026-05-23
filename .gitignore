@@ -4,3 +4,4 @@ obj
 *.bat
 *.zip
 *.lscache
+Classes/Test.cs

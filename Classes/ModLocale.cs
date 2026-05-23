@@ -44,7 +44,7 @@ public class Localization
 	public delegate void LocaleChanged();
 	public static event LocaleChanged OnLocaleChanged;
 	// private static Locales currentLocale = Locales.ENGLISH;
-	private readonly static Dictionary<Items, string> dict_en = new()
+	private readonly static Dictionary<Items, string> englishDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
@@ -56,7 +56,7 @@ public class Localization
 		{Items.FULL, "Full"},
 		{Items.DEF, "Default"},
 		{Items.OPTIMIZED, "Optimized"},
-		{Items.AGGRESIVE, "Aggresive"},
+		{Items.AGGRESIVE, "Minimum"},
 		{Items.FXAA, "FXAA"},
 		{Items.MSAA, "MSAA"},
 		{Items.TAA, "TAA"},
@@ -75,61 +75,74 @@ public class Localization
 		{Items.SET_MACHINEPARTICLES_ENTRY, "Machine particles"},
 		{Items.PRESET_VANILLA, "Vanilla"},
 		{Items.PRESET_OPTIMIZED, "Optimized"},
-		{Items.PRESET_OVERDRIVE, "Overdrive"},
+		{Items.PRESET_OVERDRIVE, "Minimal"},
 		{Items.PRESET_CUSTOM, "Custom"},
 	};
-	private readonly static Dictionary<Items, string> dict_jp = new()
+	private readonly static Dictionary<Items, string> japaneseDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
 		{Items.LOW, "Low"},
 		{Items.MEDIUM, "Medium"},
 		{Items.HIGH, "High"},
+
 		{Items.NONE, "なし"},
 		{Items.REDUCED, "少ない"},
-		{Items.FULL, "完全な"},
+		{Items.FULL, "最大"},
+
 		{Items.DEF, "デフォルト"},
-		{Items.OPTIMIZED, "最適化された"},
-		{Items.AGGRESIVE, "攻撃的"},
+		{Items.OPTIMIZED, "最適化"},
+		{Items.AGGRESIVE, "最低限"},
+
 		{Items.FXAA, "FXAA"},
 		{Items.MSAA, "MSAA"},
 		{Items.TAA, "TAA"},
+
 		{Items.RACE_ONLY, "レース中のみ"},
+
 		{Items.MOD_BUTTON, "MODの設定"},
+
 		{Items.SET_PRESET, "プリセット"},
 		{Items.SET_GI_ENTRY, "グローバルイルミネーション [!]"},
 		{Items.SET_SSR_ENTRY, "画面空間反射"},
-		{Items.SET_SHADOWQUALITY_ENTRY, "シャドウの質"},
+		{Items.SET_SHADOWQUALITY_ENTRY, "影の品質"},
 		{Items.SET_AO_ENTRY, "アンビエントオクルージョン"},
 		{Items.SET_CHROMAABERRATION_ENTRY, "色収差"},
 		{Items.SET_VIGNETTE_ENTRY, "ビネット"},
 		{Items.SET_SHADOWTONES_ENTRY, "シャドウトーンマッピング"},
 		{Items.SET_DOCKLIGHTS_ENTRY, "ドックライトの品質"},
-		{Items.SET_AA_ENTRY, "アンチエイリアシング"},
-		{Items.SET_MACHINEPARTICLES_ENTRY, "機械の微粒子"},
+		{Items.SET_AA_ENTRY, "アンチエイリアス"},
+		{Items.SET_MACHINEPARTICLES_ENTRY, "機体のパーティクル"},
+
 		{Items.PRESET_VANILLA, "デフォルト"},
-		{Items.PRESET_OPTIMIZED, "最適化された"},
-		{Items.PRESET_OVERDRIVE, "オーバードライブ"},
+		{Items.PRESET_OPTIMIZED, "最適化"},
+		{Items.PRESET_OVERDRIVE, "ミニマル"},
 		{Items.PRESET_CUSTOM, "カスタム"},
 	};
-	private readonly static Dictionary<Items, string> dict_cn_s = new()
+	private readonly static Dictionary<Items, string> simplifiedChineseDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
 		{Items.LOW, "Low"},
 		{Items.MEDIUM, "Medium"},
 		{Items.HIGH, "High"},
+
 		{Items.NONE, "无"},
 		{Items.REDUCED, "简化"},
 		{Items.FULL, "完整"},
+
 		{Items.DEF, "默认"},
 		{Items.OPTIMIZED, "优化"},
-		{Items.AGGRESIVE, "咄咄逼人"},
+		{Items.AGGRESIVE, "最小"},
+
 		{Items.FXAA, "FXAA"},
 		{Items.MSAA, "MSAA"},
 		{Items.TAA, "TAA"},
+
 		{Items.RACE_ONLY, "仅限比赛"},
+
 		{Items.MOD_BUTTON, "模组配置"},
+
 		{Items.SET_PRESET, "预设"},
 		{Items.SET_GI_ENTRY, "全局光照 [!]"},
 		{Items.SET_SSR_ENTRY, "屏幕空间反射"},
@@ -141,29 +154,36 @@ public class Localization
 		{Items.SET_DOCKLIGHTS_ENTRY, "码头照明质量"},
 		{Items.SET_AA_ENTRY, "抗锯齿"},
 		{Items.SET_MACHINEPARTICLES_ENTRY, "机械颗粒"},
+
 		{Items.PRESET_VANILLA, "默认"},
 		{Items.PRESET_OPTIMIZED, "优化"},
-		{Items.PRESET_OVERDRIVE, "超速"},
+		{Items.PRESET_OVERDRIVE, "极简"},
 		{Items.PRESET_CUSTOM, "自定义"},
 	};
-	private readonly static Dictionary<Items, string> dict_cn_t = new()
+	private readonly static Dictionary<Items, string> traditionalChineseDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
 		{Items.LOW, "Low"},
 		{Items.MEDIUM, "Medium"},
 		{Items.HIGH, "High"},
+
 		{Items.NONE, "無"},
 		{Items.REDUCED, "降價"},
 		{Items.FULL, "完整"},
+
 		{Items.DEF, "預設"},
 		{Items.OPTIMIZED, "已優化"},
-		{Items.AGGRESIVE, "咄咄逼人"},
+		{Items.AGGRESIVE, "最低"},
+
 		{Items.FXAA, "FXAA"},
 		{Items.MSAA, "MSAA"},
 		{Items.TAA, "TAA"},
+
 		{Items.RACE_ONLY, "僅限賽事"},
+
 		{Items.MOD_BUTTON, "模組設定"},
+
 		{Items.SET_PRESET, "預設"},
 		{Items.SET_GI_ENTRY, "全局光照 [!]"},
 		{Items.SET_SSR_ENTRY, "螢幕空間反射"},
@@ -175,9 +195,10 @@ public class Localization
 		{Items.SET_DOCKLIGHTS_ENTRY, "碼頭照明品質"},
 		{Items.SET_AA_ENTRY, "抗鋸齒"},
 		{Items.SET_MACHINEPARTICLES_ENTRY, "機械微粒"},
+
 		{Items.PRESET_VANILLA, "預設"},
 		{Items.PRESET_OPTIMIZED, "已優化"},
-		{Items.PRESET_OVERDRIVE, "超速"},
+		{Items.PRESET_OVERDRIVE, "極簡"},
 		{Items.PRESET_CUSTOM, "自訂"},
 	};
 
@@ -191,13 +212,13 @@ public class Localization
 		switch (Config.Language)
 		{
 			case Config.LanguageType.English:
-				return dict_en[item];
+				return englishDict[item];
 			case Config.LanguageType.Japanese:
-				return dict_jp[item];
+				return japaneseDict[item];
 			case Config.LanguageType.Chinese_t:
-				return dict_cn_t[item];
+				return traditionalChineseDict[item];
 			case Config.LanguageType.Chinese_s:
-				return dict_cn_s[item];
+				return simplifiedChineseDict[item];
 			default:
 				return "ERR: Unknown Locale";
 		}

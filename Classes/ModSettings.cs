@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -9,18 +10,14 @@ using UnityEngine.Localization.Components;
 using TMPro;
 using System.Collections.Generic;
 using BepInEx.Configuration;
-// using UnityEngine.Rendering;
-// using UnityEngine.Rendering.HighDefinition;
-// using UnityEngine.VFX;
-// using Unity.Cinemachine;
-using System;
 using UnityEngine.Rendering;
+using UnityEngine.EventSystems;
 
 namespace ArchPerformanceMod;
 
 public class ModSettings
 {
-	private static bool init = true;
+	// Enums
 	private static PerformancePresets currentPreset;
 	public enum ToggleEnum { off, on }
 	public enum TieredEnum { low, medium, high }
@@ -107,9 +104,15 @@ public class ModSettings
 	private static GameObject settingsOriginal;
 	private static GameObject scrollViewOriginal;
 	private static GameObject applyButtonOriginal;
-	private static GameObject settingsButton;
-	private static GameObject applyButton;
+	private static GameObject modConfObj;
+	private static GameObject applyConfObj;
 	private static GameObject settingsView;
+	private static Button modConfBtn;
+	private static Button applyConfBtn;
+
+	// Vars
+	private static bool init = false;
+	private static bool delayedInit = false;
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(Scene_Settings), nameof(Scene_Settings.Start))]
@@ -131,13 +134,27 @@ public class ModSettings
 			settingsOriginal.transform.Find("Button_Keyassign").GetComponent<Button>().onClick.AddListener((UnityAction)System.Delegate.CreateDelegate(typeof(System.Action), mi));
 
 			// Create mod settings button
-			settingsButton = CreateModSettingButton();
+			modConfObj = CreateModSettingButton();
 
 			// Create our own Apply button
-			applyButton = CreateModApplyButton();
+			applyConfObj = CreateModApplyButton();
+			// modConfObj.GetComponent<Button>().onClick.AddListener((Action) applyConfObj.GetComponent<Button>().);
 
 			// Create the settings table
 			settingsView = CreateDataView();
+
+			// Set up UI navigation. Very roundabout because Unity is garbage.
+			Button keyAssignButton = settingsOriginal.transform.Find("Button_Keyassign").GetComponent<Button>();
+			Utils.SetUINavigation(keyAssignButton, NavDirEnum.DONW, modConfBtn);
+
+			Button exitButton = settingsOriginal.transform.Find("Button_Exit").GetComponent<Button>();
+			Utils.SetUINavigation(exitButton, NavDirEnum.UP, modConfBtn);
+
+			Utils.SetUINavigation(modConfBtn, NavDirEnum.UP, keyAssignButton);
+			Utils.SetUINavigation(modConfBtn, NavDirEnum.DONW, exitButton);
+			Utils.SetUINavigation(modConfBtn, NavDirEnum.RIGHT, applyConfBtn);
+
+			Utils.SetUINavigation(applyConfBtn, NavDirEnum.LEFT, modConfBtn);
 		}
 		catch (Exception err)
 		{
@@ -162,6 +179,7 @@ public class ModSettings
 		btn.GetComponent<Button>().onClick.RemoveAllListeners();
 		btn.GetComponent<Button>().onClick.AddListener((System.Action)(() => OnShowModSettings()));
 
+		modConfBtn = btn.GetComponent<Button>();
 		return btn;
 	}
 
@@ -183,6 +201,7 @@ public class ModSettings
 				));
 
 		btn.SetActive(false);
+		applyConfBtn = btn.GetComponent<Button>();
 		return btn;
 	}
 
@@ -202,7 +221,7 @@ public class ModSettings
 
 		content.transform.localPosition = originalContent.transform.localPosition;
 		content.transform.localScale = new Vector3(1, 1, 1);
-		GameObject row = content.transform.GetChild(0).gameObject;
+		GameObject rowSource = content.transform.GetChild(0).gameObject;
 
 		// Populate with custom settings
 		List<Localization.Items> buttons = [
@@ -222,15 +241,55 @@ public class ModSettings
 		{
 			content.transform.GetChild(i).gameObject.active = false;
 		}
+		List<GameObject> newRows = [];
 		for (int i = 0; i < buttons.Count; i++)
 		{
-			GameObject newRow = DuplicateSettingRow(row, buttons[i]);
+			GameObject newRow = DuplicateSettingRow(rowSource, buttons[i]);
+			newRows.Add(newRow);
 			newRow.transform.SetParent(content.transform);
-			newRow.transform.localPosition = row.transform.localPosition - new Vector3(0, 60 * i, 0);
+			newRow.transform.localPosition = rowSource.transform.localPosition - new Vector3(0, 60 * i, 0);
 			newRow.transform.localScale = new Vector3(1, 1, 1);
 
-			newRow.GetComponent<RectTransform>().sizeDelta = row.GetComponent<RectTransform>().sizeDelta + new Vector2(30, 10);
+			newRow.GetComponent<RectTransform>().sizeDelta = rowSource.GetComponent<RectTransform>().sizeDelta + new Vector2(30, 10);
 			newRow.active = true; // Doesn't animate the vanilla menus, but that's fine.
+		}
+
+		// Set up UI navigation
+		for (int i = 0; i < newRows.Count; i++)
+		{
+			GameObject row = newRows[i];
+			Button btnLeft = row.transform.GetChild(1).GetComponent<Button>();
+			Button btnRight = row.transform.GetChild(2).GetComponent<Button>();
+
+			if (i == 0)
+			{
+				Utils.SetUINavigation(btnLeft, NavDirEnum.UP, applyConfBtn);
+				Utils.SetUINavigation(btnRight, NavDirEnum.UP, applyConfBtn);
+
+				Utils.SetUINavigation(applyConfBtn, NavDirEnum.DONW, btnLeft);
+			}
+			else
+			{
+				Utils.SetUINavigation(btnLeft, NavDirEnum.UP, newRows[i - 1].transform.GetChild(1).GetComponent<Button>());
+				Utils.SetUINavigation(btnRight, NavDirEnum.UP, newRows[i - 1].transform.GetChild(2).GetComponent<Button>());
+			}
+
+			if (i == newRows.Count - 1)
+			{
+				Utils.SetUINavigation(btnLeft, NavDirEnum.DONW, null);
+				Utils.SetUINavigation(btnRight, NavDirEnum.DONW, null);
+			}
+			else
+			{
+				Utils.SetUINavigation(btnLeft, NavDirEnum.DONW, newRows[i + 1].transform.GetChild(1).GetComponent<Button>());
+				Utils.SetUINavigation(btnRight, NavDirEnum.DONW, newRows[i + 1].transform.GetChild(2).GetComponent<Button>());
+			}
+
+			Utils.SetUINavigation(btnLeft, NavDirEnum.LEFT, modConfBtn);
+			Utils.SetUINavigation(btnLeft, NavDirEnum.RIGHT, btnRight);
+
+			Utils.SetUINavigation(btnRight, NavDirEnum.LEFT, btnLeft);
+			Utils.SetUINavigation(btnRight, NavDirEnum.RIGHT, null);
 		}
 
 		// TODO Do something about scrolling.
@@ -309,17 +368,18 @@ public class ModSettings
 
 	public static void OnShowModSettings()
 	{
-		applyButton.active = true;
+		applyConfObj.active = true;
 		settingsView.active = true;
 		scrollViewOriginal.active = false;
 		applyButtonOriginal.active = false;
 
+		EventSystem.current.SetSelectedGameObject(applyConfObj, null);
 		RefreshEntries();
 	}
 
 	public static void RefreshEntries()
 	{
-		if (!settingsView) return; 
+		if (!settingsView) return;
 		_confPreset.Cancel();
 		_confGlobalIllumination.Cancel();
 		_confReflections.Cancel();
@@ -335,7 +395,7 @@ public class ModSettings
 
 	public static void OnHideModSettings()
 	{
-		applyButton.active = false;
+		applyConfObj.active = false;
 		settingsView.active = false;
 		scrollViewOriginal.active = true;
 		applyButtonOriginal.active = true;
@@ -362,6 +422,8 @@ public class ModSettings
 
 		currentPreset = confPreset.Value;
 		ApplyChanges();
+
+		BridgedSceneManager.OnSceneLoadComplete.AddListener((Action)(() => DelayedInit()));
 
 		// Config.Debug_OutputRawSaveData = true;
 	}
@@ -443,15 +505,15 @@ public class ModSettings
 		ModPerformance.SetGlobalIllumination(confGlobalIllumination.Value);
 		ModPerformance.SetReflections(confReflections.Value);
 		ModPerformance.SetShadowQuality(confShadowQuality.Value);
-		// ModPerformance.SetAmbientOcclusion(confAmbientOcclusion.Value);
 		ModPerformance.SetChromaAberration(confChromaAberration.Value);
 		ModPerformance.SetVignette(confVignette.Value);
 		ModPerformance.SetShadowTones(confShadowTones.Value);
-		ModPerformance.SetDockLights(confDockLights.Value);
 		ModPerformance.SetAntialiasing(confAntialiasing.Value);
-		if (!init) ModPerformance.SetMachineParticles(confMachineParticles.Value);
-
-		init = false;
+		if (delayedInit)
+		{
+			ModPerformance.SetDockLights(confDockLights.Value);
+			ModPerformance.SetMachineParticles(confMachineParticles.Value);
+		}
 
 		if (QualityLevelPatch.QualityLevelChanged)
 		{
@@ -476,6 +538,26 @@ public class ModSettings
 			confReflections.Value != StrengthEnum.def, // Screen Space Lens Flare
 			confReflections.Value != StrengthEnum.def  // Data Driven Lens Flare
 		);
+
+		init = true;
+	}
+
+	private static void DelayedInit()
+	{
+		if (!init || delayedInit) return;
+		ModPerformance.SetDockLights(confDockLights.Value);
+		ModPerformance.SetMachineParticles(confMachineParticles.Value);
+		delayedInit = true;
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(SettingsManager), nameof(SettingsManager.SetResolution))]
+	private static void RescaleUI()
+	{
+		// Why this isn't automatically handled is beyond me.
+		Utils.RescaleUI(modConfObj);
+		Utils.RescaleUI(applyConfObj);
+		Utils.RescaleUI(settingsView);
 	}
 }
 

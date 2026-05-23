@@ -52,13 +52,7 @@ public class ModPerformance
 	{
 		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[1].active = toSet == ModSettings.ToggleEnum.on;
 	}
-
-	public static void SetAmbientOcclusion(ModSettings.ToggleEnum toSet)
-	{
-		// GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[2].active = toSet == ModSettings.GenericToggleEnum.on;
-
-	}
-
+	
 	public static void SetVignette(ModSettings.ToggleEnum toSet)
 	{
 		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[4].active = toSet == ModSettings.ToggleEnum.on;
