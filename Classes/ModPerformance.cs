@@ -12,27 +12,61 @@ public class ModPerformance
 {
 	public static GameObject GetEnvironmentObj()
 	{
+		if (SceneManager.GetActiveScene().name == "Georama")
+			return SceneManager.GetActiveScene().GetRootGameObjects().First(item => item.name == "Env");
+
 		return SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Enviroment");
+	}
+	public static Volume GetPostProcessVolume()
+	{
+		return GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>();
 	}
 	public static GameObject GetPlayersObj()
 	{
 		return SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Players");
 	}
 
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
+	public static void ApplyConfigurationInGame()
+	{
+		// GameObject env = GetEnvironmentObj();
+		// Volume vol = GetPostProcessVolume();
+
+		SetGlobalIllumination(ModSettings.confGlobalIllumination.Value);
+		SetReflections(ModSettings.confReflections.Value);
+		SetChromaAberration(ModSettings.confChromaAberration.Value);
+		SetVignette(ModSettings.confVignette.Value);
+		SetShadowTones(ModSettings.confShadowTones.Value);
+		SetDockLights(ModSettings.confDockLights.Value);
+		SetAntialiasing(ModSettings.confAntialiasing.Value);
+		SetShadowQuality(ModSettings.confShadowQuality.Value);
+		SetMachineParticles(ModSettings.confMachineParticles.Value);
+	}
+
 	public static void SetGlobalIllumination(ModSettings.ToggleEnum toSet)
 	{
 		bool input = toSet == ModSettings.ToggleEnum.on;
 
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[12].active = input;
+		GetPostProcessVolume().profile.TryGet(out GlobalIllumination ilum);
+		ilum?.active = input;
 
-		GameObject SkyFogObj = GetEnvironmentObj().transform.Find("Vol").Find("Sky and Fog Volume").gameObject;
-		VisualEnvironment visualEnv;
-		SkyFogObj.GetComponent<Volume>().profile.TryGet(out visualEnv);
-		visualEnv.skyAmbientMode.value = input ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
+		if (SceneManager.GetActiveScene().name == "Georama")
+		{
+			GetEnvironmentObj().transform.Find("Vol").Find("Enviroments").GetComponent<Volume>().profile.TryGet(out VisualEnvironment visualEnv);
+			visualEnv?.skyAmbientMode.value = input ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
+		}
+		else
+		{
+			GetEnvironmentObj().transform.Find("Vol").Find("Sky and Fog Volume").GetComponent<Volume>().profile.TryGet(out VisualEnvironment visualEnv);
+			visualEnv?.skyAmbientMode.value = input ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
+		}
 	}
 
 	public static void SetReflections(ModSettings.StrengthEnum toSet)
 	{
+		if (SceneManager.GetActiveScene().name == "Georama") return;
+
 		GameObject[] rootObjs = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects();
 		Transform postProcess = GetEnvironmentObj().transform.Find("Vol").Find("PostProcess");
 		GameObject dockProbes = rootObjs.First(item => item.name == "World_PlayerDock").transform.Find("StageV3").Find("Stage_v3").Find("Probe").gameObject;
@@ -50,21 +84,26 @@ public class ModPerformance
 
 	public static void SetChromaAberration(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[1].active = toSet == ModSettings.ToggleEnum.on;
+		GetPostProcessVolume().profile.TryGet(out ChromaticAberration chroma);
+		chroma?.active = toSet == ModSettings.ToggleEnum.on;
 	}
-	
+
 	public static void SetVignette(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[4].active = toSet == ModSettings.ToggleEnum.on;
+		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.TryGet(out Vignette vignette);
+		vignette?.active = toSet == ModSettings.ToggleEnum.on;
 	}
 
 	public static void SetShadowTones(ModSettings.ToggleEnum toSet)
 	{
-		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.components[6].active = toSet == ModSettings.ToggleEnum.on;
+		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.TryGet(out Tonemapping tonemapping);
+		tonemapping?.active = toSet == ModSettings.ToggleEnum.on;
 	}
 
 	public static void SetDockLights(ModSettings.ToggleEnum toSet)
 	{
+		if (SceneManager.GetActiveScene().name == "Georama") return;
+
 		bool input = toSet == ModSettings.ToggleEnum.on;
 
 		GameObject dockRootObj = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "World_PlayerDock");
@@ -78,8 +117,21 @@ public class ModPerformance
 
 	public static void SetAntialiasing(ModSettings.AntialiasingEnum toSet)
 	{
-		Camera camera = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Main Camera").GetComponent<Camera>();
-		HDAdditionalCameraData cameraData = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Main Camera").GetComponent<HDAdditionalCameraData>();
+		Camera camera = null;
+		HDAdditionalCameraData cameraData = null;
+		if (SceneManager.GetActiveScene().name == "Georama")
+		{
+			var cameraObj = SceneManager.GetActiveScene().GetRootGameObjects().First(item => item.name == "Camera");
+			camera = cameraObj.GetComponent<Camera>();
+			cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
+		}
+		else
+		{
+			var cameraObj = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Main Camera");
+			camera = cameraObj.GetComponent<Camera>();
+			cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
+		}
+
 		camera.allowMSAA = true;
 		switch (toSet)
 		{
@@ -113,6 +165,8 @@ public class ModPerformance
 
 	public static void SetMachineParticles(ModSettings.QuantityEnum toSet)
 	{
+		if (SceneManager.GetActiveScene().name == "Georama") return;
+
 		Transform playerVFX = GetPlayersObj()?.transform.Find("MyPlayer").Find("Effects");
 		if (!playerVFX) return;
 

@@ -16,7 +16,7 @@ namespace ArchPerformanceMod;
 public class Plugin : BasePlugin
 {
     internal static new ManualLogSource Log;
-    private static readonly bool verboseLogging = false;
+    private static readonly bool verboseLogging = true;
     public static ConfigFile config;
     public override void Load()
     {
@@ -35,6 +35,7 @@ public class Plugin : BasePlugin
         harmony.PatchAll(typeof(ModSettings));
         harmony.PatchAll(typeof(ModPerformance));
         harmony.PatchAll(typeof(ModGameplay));
+        harmony.PatchAll(typeof(DioramaEnvPatch));
         // harmony.PatchAll(typeof(TestPatch));
 
         Log.LogInfo($"Done.");
@@ -59,7 +60,7 @@ public class PluginInitializer
     [HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Start))]
     public static void Initialize(ref Scene_MainMenu __instance)
     {
-        if (init) return;
+        // if (init) return;
         Plugin.LogInfo($"Preparing mod...");
 
         Cursor.lockState = CursorLockMode.Confined;

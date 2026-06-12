@@ -23,6 +23,7 @@ public class ModSettings
 	public enum TieredEnum { low, medium, high }
 	public enum TieredWithOffEnum { off, low, medium, high }
 	public enum RaceOnlyEnum { off, raceOnly, on }
+	public enum DioramaOnlyEnum { off, dioramaOnly, on }
 	public enum QuantityEnum { none, reduced, full }
 	public enum AntialiasingEnum { off, FXAA, MSAA, TAA }
 	public enum StrengthEnum { def, optimized, aggresive }
@@ -38,6 +39,10 @@ public class ModSettings
 		{TieredWithOffEnum.low, Localization.Items.LOW},
 		{TieredWithOffEnum.medium, Localization.Items.MEDIUM},
 		{TieredWithOffEnum.high, Localization.Items.HIGH},
+
+		{DioramaOnlyEnum.off, Localization.Items.OFF},
+		{DioramaOnlyEnum.dioramaOnly, Localization.Items.DIORAMA_ONLY},
+		{DioramaOnlyEnum.on, Localization.Items.ON},
 
 		{RaceOnlyEnum.off, Localization.Items.OFF},
 		{RaceOnlyEnum.raceOnly, Localization.Items.RACE_ONLY},
@@ -66,6 +71,7 @@ public class ModSettings
 	private static readonly IReadOnlyList<TieredEnum> tieredEnums = [TieredEnum.low, TieredEnum.medium, TieredEnum.high];
 	private static readonly IReadOnlyList<TieredWithOffEnum> tieredWithDisabledEnums = [TieredWithOffEnum.off, TieredWithOffEnum.low, TieredWithOffEnum.medium, TieredWithOffEnum.high];
 	private static readonly IReadOnlyList<RaceOnlyEnum> raceOnlyEnums = [RaceOnlyEnum.off, RaceOnlyEnum.raceOnly, RaceOnlyEnum.on];
+	private static readonly IReadOnlyList<DioramaOnlyEnum> dioramaOnlyEnums = [DioramaOnlyEnum.off, DioramaOnlyEnum.dioramaOnly, DioramaOnlyEnum.on];
 	private static readonly IReadOnlyList<AntialiasingEnum> antialiasingEnums = [AntialiasingEnum.off, AntialiasingEnum.FXAA, AntialiasingEnum.MSAA, AntialiasingEnum.TAA];
 	private static readonly IReadOnlyList<StrengthEnum> strengthEnums = [StrengthEnum.def, StrengthEnum.optimized, StrengthEnum.aggresive];
 	private static readonly IReadOnlyList<QuantityEnum> quantityEnums = [QuantityEnum.none, QuantityEnum.reduced, QuantityEnum.full];
@@ -79,6 +85,7 @@ public class ModSettings
 	public static ConfigEntry<StrengthEnum> confReflections;
 	public static ConfigEntry<ToggleEnum> confAmbientOcclusion;
 	public static ConfigEntry<StrengthEnum> confShadowQuality;
+	public static ConfigEntry<DioramaOnlyEnum> confVolumetrics;
 	public static ConfigEntry<ToggleEnum> confChromaAberration;
 	public static ConfigEntry<ToggleEnum> confVignette;
 	public static ConfigEntry<ToggleEnum> confShadowTones;
@@ -90,6 +97,7 @@ public class ModSettings
 	private static CycleConfigEntry<ToggleEnum> _confGlobalIllumination;
 	private static CycleConfigEntry<StrengthEnum> _confReflections;
 	private static CycleConfigEntry<StrengthEnum> _confShadowQuality;
+	private static CycleConfigEntry<DioramaOnlyEnum> _confVolumetrics;
 	private static CycleConfigEntry<ToggleEnum> _confAmbientOcclusion;
 	private static CycleConfigEntry<ToggleEnum> _confChromaAberration;
 	private static CycleConfigEntry<ToggleEnum> _confVignette;
@@ -111,6 +119,7 @@ public class ModSettings
 	private static Button applyConfBtn;
 
 	// Vars
+	private static bool once = false;
 	private static bool init = false;
 	private static bool delayedInit = false;
 
@@ -229,6 +238,7 @@ public class ModSettings
 			Localization.Items.SET_GI_ENTRY, // Very heavy
 			Localization.Items.SET_SSR_ENTRY, // Light
 			Localization.Items.SET_SHADOWQUALITY_ENTRY, // Medium
+			Localization.Items.SET_VOLUMETRICS, // Medium
 			Localization.Items.SET_DOCKLIGHTS_ENTRY, // Heavy
 			Localization.Items.SET_AO_ENTRY, // Free
 			Localization.Items.SET_CHROMAABERRATION_ENTRY, // Free
@@ -349,6 +359,9 @@ public class ModSettings
 			case Localization.Items.SET_MACHINEPARTICLES_ENTRY:
 				entry = _confMachineParticles = new CycleConfigEntry<QuantityEnum>(confMachineParticles, quantityEnums, valueText);
 				break;
+			case Localization.Items.SET_VOLUMETRICS:
+				entry = _confVolumetrics = new CycleConfigEntry<DioramaOnlyEnum>(confVolumetrics, dioramaOnlyEnums, valueText);
+				break;
 		}
 
 		Button btnLeft = obj.transform.GetChild(1).GetComponent<Button>();
@@ -412,6 +425,7 @@ public class ModSettings
 		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", ToggleEnum.on, "Toggles Global Illumination, volumetric lighting within the main world. Cost: Very expensive.");
 		confReflections = config.Bind("Graphics", "Reflections", StrengthEnum.def, "Toggles SSR and reflection probes surfaces. Cost: Light.");
 		confShadowQuality = config.Bind("Graphics", "ShadowQuality", StrengthEnum.def, "Adjusts quality of all shadows. Cost: Medium.");
+		confVolumetrics = config.Bind("Graphics", "Volumetrics", DioramaOnlyEnum.on, "Toggles Volumetric effects. Mostly found in Diorama. Warning: This will disable some Diorama effects. Cost: Medium.");
 		confAmbientOcclusion = config.Bind("Graphics", "AmbientOcclusion", ToggleEnum.on, "Toggles Ambient Occlusion. Cost: Very light.");
 		confChromaAberration = config.Bind("Graphics", "ChromaticAberration", ToggleEnum.on, "Toggles Chromatic Aberration. Cost: Very light.");
 		confVignette = config.Bind("Graphics", "Vignette", ToggleEnum.on, "Toggles a vignette effect. Cost: Very light.");
@@ -423,9 +437,8 @@ public class ModSettings
 		currentPreset = confPreset.Value;
 		ApplyChanges();
 
-		BridgedSceneManager.OnSceneLoadComplete.AddListener((Action)(() => DelayedInit()));
-
-		// Config.Debug_OutputRawSaveData = true;
+		if (!once) BridgedSceneManager.OnSceneLoadComplete.AddListener((Action)(() => DelayedInit()));
+		once = true;
 	}
 
 	public static void OnSettingsApply()
@@ -434,6 +447,7 @@ public class ModSettings
 		_confGlobalIllumination.Confirm();
 		_confReflections.Confirm();
 		_confShadowQuality.Confirm();
+		_confVolumetrics.Confirm();
 		_confAmbientOcclusion.Confirm();
 		_confChromaAberration.Confirm();
 		_confVignette.Confirm();
@@ -458,6 +472,7 @@ public class ModSettings
 					confGlobalIllumination.Value = ToggleEnum.off;
 					confReflections.Value = StrengthEnum.aggresive;
 					confShadowQuality.Value = StrengthEnum.aggresive;
+					confVolumetrics.Value = DioramaOnlyEnum.off;
 					confAmbientOcclusion.Value = ToggleEnum.off;
 					confChromaAberration.Value = ToggleEnum.off;
 					confVignette.Value = ToggleEnum.off;
@@ -470,6 +485,7 @@ public class ModSettings
 					confGlobalIllumination.Value = ToggleEnum.off;
 					confReflections.Value = StrengthEnum.optimized;
 					confShadowQuality.Value = StrengthEnum.optimized;
+					confVolumetrics.Value = DioramaOnlyEnum.dioramaOnly;
 					confAmbientOcclusion.Value = ToggleEnum.off;
 					confChromaAberration.Value = ToggleEnum.on;
 					confVignette.Value = ToggleEnum.on;
@@ -483,6 +499,7 @@ public class ModSettings
 					confGlobalIllumination.Value = ToggleEnum.on;
 					confReflections.Value = StrengthEnum.def;
 					confShadowQuality.Value = StrengthEnum.def;
+					confVolumetrics.Value = DioramaOnlyEnum.on;
 					confAmbientOcclusion.Value = ToggleEnum.on;
 					confChromaAberration.Value = ToggleEnum.on;
 					confVignette.Value = ToggleEnum.on;
@@ -526,10 +543,10 @@ public class ModSettings
 		GraphicsSettings.useScriptableRenderPipelineBatching = true;
 		QualitySettings.lodBias = 0.75f;
 
-		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch(
+		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
 			confReflections.Value != StrengthEnum.def, // SSR
 			confAmbientOcclusion.Value == ToggleEnum.off, // Ambient Occlusion
-			true, // Volumetrics
+			confVolumetrics.Value != DioramaOnlyEnum.on, // Volumetrics // Disabled if not on
 			true, // Vol Clouds
 			true, // Subsurface Scattering
 			true, // Decals (already disabled by default)
@@ -548,6 +565,13 @@ public class ModSettings
 		ModPerformance.SetDockLights(confDockLights.Value);
 		ModPerformance.SetMachineParticles(confMachineParticles.Value);
 		delayedInit = true;
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
+	public static void resetMainConditionals()
+	{
+		delayedInit = false;
 	}
 
 	[HarmonyPostfix]

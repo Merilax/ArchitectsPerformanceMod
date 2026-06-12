@@ -69,12 +69,12 @@ internal static class HDRPReflectionHelper
     // ------------------------------------------------------------------
     //  Debug logging helper
     // ------------------------------------------------------------------
-    private static bool Debug => false;
+    private static bool Debug => true;
 
     private static void DebugLog(string msg)
     {
         if (Debug)
-            DebugLog($"[Debug] {msg}");
+            Plugin.LogDebug($"[Debug] {msg}");
     }
 
     // ==================================================================

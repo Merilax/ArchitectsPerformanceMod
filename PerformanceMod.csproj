@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>ArchitectsPerformanceMod</AssemblyName>
     <Product>Architect's Performance Mod</Product>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -31,6 +31,9 @@
     </Reference>
     <Reference Include="UnityEngineUI">
       <HintPath>..\lib\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="InputSystem">
+      <HintPath>..\lib\Unity.InputSystem.dll</HintPath>
     </Reference>
     <Reference Include="UnityEnginePhysics">
       <HintPath>..\lib\UnityEngine.PhysicsModule.dll</HintPath>
