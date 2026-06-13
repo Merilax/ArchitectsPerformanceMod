@@ -50,11 +50,11 @@ public class Plugin : BasePlugin
 
 public class PluginInitializer
 {
-    private static TMP_FontAsset mainFont;
-    private static Material mainFontMaterial;
+    public static TMP_FontAsset mainFont;
+    public static Material mainFontMaterial;
     private static GameObject modSignature1;
     private static GameObject modSignature2;
-    private static bool init = false;
+    // private static bool init = false;
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Start))]
@@ -67,7 +67,7 @@ public class PluginInitializer
 
         AddModSignature(ref __instance);
 
-        init = true;
+        // init = true;
         Plugin.LogInfo($"Mod initialized.");
     }
     public static void AddModSignature(ref Scene_MainMenu __instance)
