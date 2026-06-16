@@ -569,7 +569,7 @@ public class ModSettings
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
-	public static void resetMainConditionals()
+	public static void ResetMainConditionals()
 	{
 		delayedInit = false;
 	}

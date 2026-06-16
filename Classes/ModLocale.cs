@@ -22,7 +22,7 @@ public class Localization
 
 	public delegate void LocaleChanged();
 	public static event LocaleChanged OnLocaleChanged;
-	// private static Locales currentLocale = Locales.ENGLISH;
+
 	private readonly static Dictionary<Items, string> englishDict = new()
 	{
 		{Items.OFF, "Off"},
@@ -190,18 +190,23 @@ public class Localization
 
 	public static string GetText(Items item)
 	{
-		switch (Config.Language)
+		return GetTextLocale(item, Config.Language);
+	}
+
+	public static string GetTextLocale(Items item, Config.LanguageType locale)
+	{
+		Dictionary<Items, string> dict = locale switch
 		{
-			case Config.LanguageType.English:
-				return englishDict[item];
-			case Config.LanguageType.Japanese:
-				return japaneseDict[item];
-			case Config.LanguageType.Chinese_t:
-				return traditionalChineseDict[item];
-			case Config.LanguageType.Chinese_s:
-				return simplifiedChineseDict[item];
-			default:
-				return "ERR: Unknown Locale";
-		}
+			Config.LanguageType.Japanese => japaneseDict,
+			Config.LanguageType.Chinese_t => traditionalChineseDict,
+			Config.LanguageType.Chinese_s => simplifiedChineseDict,
+			_ => englishDict,
+		};
+
+		bool ok = dict.TryGetValue(item, out string str);
+		if (ok) return str; // Return found item.
+		if (locale != Config.LanguageType.English) // Else, try again in English.
+			return GetTextLocale(item, Config.LanguageType.English);
+		return "ERR: No Text"; // Else, since the default is English and nothing was found, return an error.
 	}
 }

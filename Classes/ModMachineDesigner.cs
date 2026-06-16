@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Playables;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.SceneManagement;
@@ -28,14 +30,24 @@ public class GarageCameraPatch
 
 public class DioramaEnvPatch
 {
+	const int FONT_SIZE_NORMAL = 20;
+	const int FONT_SIZE_SUB = 16;
 	private static bool allowInteraction = false;
 	private static bool once = false;
 	private static Fog fog;
 	private static HDAdditionalCameraData cameraData;
 	private static Material groundMat;
+	private static List<LightControl> lights = [];
+	private static int currentLightPattern;
 
 	// UI
+	private static TMP_FontAsset font;
+	private static Material fontMat;
 	private static GameObject modNav;
+	private static GameObject mainMenu;
+	private static GameObject environmentMenu;
+	private static GameObject lightingMenu;
+	private static GameObject lightsUIContainer;
 	private static Slider fogHue;
 	private static Slider fogSat;
 	private static Slider fogLum;
@@ -89,6 +101,10 @@ public class DioramaEnvPatch
 
 		CreateUI();
 
+		currentLightPattern = __instance.currentLightPattern;
+
+		// GameObject handles = scene.GetRootGameObjects().First(item => item.name == "TransformHandle");
+
 		allowInteraction = true;
 	}
 
@@ -118,16 +134,29 @@ public class DioramaEnvPatch
 		}
 	}
 
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Button_ChangeLight))]
+	public static void OnLightUpdate(GeoramaSystem __instance)
+	{
+		Plugin.LogDebug("OnLightUpdate In");
+		if (currentLightPattern == __instance.currentLightPattern) return;
+		currentLightPattern = __instance.currentLightPattern;
+
+		GameObject lightContainer = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Env").transform.Find("Lights").gameObject;
+
+		ClearLightList();
+		ReloadUILights(lightContainer.transform, lightsUIContainer.transform, font, fontMat);
+		Plugin.LogDebug("OnLightUpdate Out");
+	}
 	private static void CreateUI()
 	{
 		GameObject canvas = SceneManager.GetActiveScene().GetRootGameObjects().First(item => item.name == "Canvas");
-		TMP_FontAsset font = canvas.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().font;
-		Material fontMat = canvas.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().fontSharedMaterial;
+		font = canvas.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().font;
+		fontMat = canvas.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().fontSharedMaterial;
 
-		// Nav block
+		// Main nav block
 		GameObject nav = new("Mod Nav");
 		nav.transform.SetParent(canvas.transform);
-		
 		RectTransform rectNav = nav.AddComponent<RectTransform>();
 		rectNav.pivot = new Vector2(1, 1);
 		rectNav.anchorMin = new Vector2(1, 0);
@@ -137,50 +166,28 @@ public class DioramaEnvPatch
 		Image image = nav.AddComponent<Image>();
 		image.color = new Color(.1f, .1f, .1f, .6f);
 
-		ScrollRect scrollView = CreateScrollView(nav.transform, true, false).GetComponent<ScrollRect>();
-		Transform scrollContent = scrollView.transform.GetChild(0);
+		mainMenu = new("Main");
+		mainMenu.transform.SetParent(nav.transform);
+		RectTransform rectMain = mainMenu.AddComponent<RectTransform>();
+		rectMain.pivot = new Vector2(1, 1);
+		rectMain.anchorMin = new Vector2(0, 0);
+		rectMain.anchorMax = new Vector2(1, 1);
+		rectMain.sizeDelta = new Vector2(0, 0);
+		rectMain.anchoredPosition = Vector2.zero;
+		VerticalLayoutGroup layout = mainMenu.AddComponent<VerticalLayoutGroup>();
+		layout.childForceExpandHeight = false;
+		layout.spacing = 30;
+		layout.padding = new RectOffset(20, 20, 100, 100);
 
-		const int FONT_SIZE_HEADER = 20;
-		const int FONT_SUB_SIZE = 16;
+		GameObject environmentButton = UIUtils.CreateButton("Environment", mainMenu.transform, font, fontMat, GotoEnvironment, FONT_SIZE_NORMAL);
+		GameObject lightsButton = UIUtils.CreateButton("Lighting", mainMenu.transform, font, fontMat, GotoLighting, FONT_SIZE_NORMAL);
 
-		CreateLabel("Fog Color", scrollContent, font, fontMat, FONT_SIZE_HEADER);
-		if (ModSettings.confVolumetrics.Value != ModSettings.DioramaOnlyEnum.off)
-		{
-			CreateLabel("Hue", scrollContent, font, fontMat, FONT_SUB_SIZE);
-			fogHue = CreateSlider(360, scrollContent, OnFogColorChanged).GetComponent<Slider>();
-			CreateLabel("Saturation", scrollContent, font, fontMat, FONT_SUB_SIZE);
-			fogSat = CreateSlider(100, scrollContent, OnFogColorChanged).GetComponent<Slider>();
-			CreateLabel("Value", scrollContent, font, fontMat, FONT_SUB_SIZE);
-			fogLum = CreateSlider(100, scrollContent, OnFogColorChanged).GetComponent<Slider>();
-			CreateButton("Reset", scrollContent, font, fontMat, () => SetFogAlbedo(Color.white, true), FONT_SIZE_HEADER);
-		}
-		else
-			CreateLabel("Volumetrics are disabled", scrollContent, font, fontMat, FONT_SUB_SIZE);
+		lightingMenu = CreateLightingUIBlock(nav.transform, font, fontMat);
+		lightingMenu.active = false;
+		environmentMenu = CreateEnviromentUIBlock(nav.transform, font, fontMat);
+		environmentMenu.active = false;
 
-		CreateLabel("Background Color", scrollContent, font, fontMat, FONT_SIZE_HEADER);
-		CreateLabel("Hue", scrollContent, font, fontMat, FONT_SUB_SIZE);
-		backHue = CreateSlider(360, scrollContent, OnBackColorChanged).GetComponent<Slider>();
-		CreateLabel("Saturation", scrollContent, font, fontMat, FONT_SUB_SIZE);
-		backSat = CreateSlider(100, scrollContent, OnBackColorChanged).GetComponent<Slider>();
-		CreateLabel("Value", scrollContent, font, fontMat, FONT_SUB_SIZE);
-		backLum = CreateSlider(100, scrollContent, OnBackColorChanged).GetComponent<Slider>();
-		CreateButton("Reset", scrollContent, font, fontMat, () => SetBackColor(Color.white, true), FONT_SIZE_HEADER);
-
-		CreateLabel("Ground Color", scrollContent, font, fontMat, FONT_SIZE_HEADER);
-		CreateLabel("Hue", scrollContent, font, fontMat, FONT_SUB_SIZE);
-		gndHue = CreateSlider(360, scrollContent, OnGndColorChanged).GetComponent<Slider>();
-		CreateLabel("Saturation", scrollContent, font, fontMat, FONT_SUB_SIZE);
-		gndSat = CreateSlider(100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
-		CreateLabel("Value", scrollContent, font, fontMat, FONT_SUB_SIZE);
-		gndLum = CreateSlider(100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
-		CreateButton("Reset", scrollContent, font, fontMat, () => SetGroundColor(Color.white, true), FONT_SIZE_HEADER);
-
-		CreateLabel("Toggles:", scrollContent, font, fontMat, FONT_SIZE_HEADER);
-		CreateButton("Ground", scrollContent, font, fontMat, ToggleGround, FONT_SUB_SIZE);
-		CreateButton("Terrain", scrollContent, font, fontMat, ToggleTerrain, FONT_SUB_SIZE);
-		CreateButton("Frame", scrollContent, font, fontMat, ToggleFrame, FONT_SUB_SIZE);
-		CreateButton("Captions", scrollContent, font, fontMat, ToggleCaptions, FONT_SUB_SIZE);
-
+		// After UI
 		SetFogAlbedo(Color.white, true);
 		SetBackColor(Color.white, true);
 		SetGroundColor(Color.white, true);
@@ -189,261 +196,276 @@ public class DioramaEnvPatch
 		modNav = nav;
 	}
 
-	private static GameObject CreateScrollView(Transform parent, bool vertical, bool horizontal)
+	private static GameObject CreateEnviromentUIBlock(Transform parent, TMP_FontAsset font, Material fontMat)
 	{
-		// Scroll View
-		GameObject scrollView = new("ScrollView");
-		scrollView.transform.SetParent(parent.transform);
-		RectTransform rect = scrollView.AddComponent<RectTransform>();
-		rect.pivot = new Vector2(0, 1);
-		rect.anchorMin = new Vector2(0, 0);
-		rect.anchorMax = new Vector2(1, 1);
-		rect.sizeDelta = new Vector2(0, 0);
-		rect.anchoredPosition = Vector2.zero;
-		ScrollRect scrollRect = scrollView.AddComponent<ScrollRect>();
-		scrollRect.movementType = ScrollRect.MovementType.Elastic;
-		scrollRect.horizontal = horizontal;
-		scrollRect.vertical = vertical;
-		scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-		scrollRect.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-		scrollRect.scrollSensitivity = 5;
+		GameObject scrollView = UIUtils.CreateScrollView(parent.transform, true, false);
+		scrollView.transform.GetChild(0).GetComponent<VerticalLayoutGroup>().padding = new(20, 20, 80, 80);
+		Transform scrollContent = scrollView.transform.GetChild(0);
 
-		// Content
-		GameObject content = new("Content");
-		content.transform.SetParent(scrollView.transform);
-		RectTransform rectContent = content.AddComponent<RectTransform>();
-		rectContent.pivot = new Vector2(0, 1);
-		rectContent.anchorMin = new Vector2(0, 1);
-		rectContent.anchorMax = new Vector2(1, 1);
-		// rect.sizeDelta = new Vector2(380, 1080);
-		rectContent.anchoredPosition = Vector2.zero;
-		rectContent.offsetMax = new Vector2(-20, 0);
-		VerticalLayoutGroup groupContent = content.AddComponent<VerticalLayoutGroup>();
-		groupContent.childForceExpandHeight = false;
-		groupContent.childForceExpandWidth = true;
-		groupContent.childControlHeight = true;
-		groupContent.childControlWidth = true;
-		groupContent.childAlignment = TextAnchor.UpperLeft;
-		groupContent.padding = new RectOffset(20, 20, 80, 80);
-		groupContent.spacing = 14;
-		ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
-		fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-		fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+		UIUtils.CreateButton("Return to settings", scrollContent.transform, font, fontMat, GotoMain, FONT_SIZE_NORMAL);
 
-		scrollRect.content = rectContent;
-
-		if (vertical)
+		UIUtils.CreateLabel("Fog Color", scrollContent, font, fontMat, FONT_SIZE_NORMAL);
+		if (ModSettings.confVolumetrics.Value != ModSettings.DioramaOnlyEnum.off)
 		{
-			var scrollObj = CreateScrollbar(scrollView.transform, true);
-			scrollRect.verticalScrollbar = scrollObj.GetComponent<Scrollbar>();
+			UIUtils.CreateLabel("Hue", scrollContent, font, fontMat, FONT_SIZE_SUB);
+			fogHue = UIUtils.CreateSlider(0.01f, 360, scrollContent, OnFogColorChanged).GetComponent<Slider>();
+			UIUtils.CreateLabel("Saturation", scrollContent, font, fontMat, FONT_SIZE_SUB);
+			fogSat = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnFogColorChanged).GetComponent<Slider>();
+			UIUtils.CreateLabel("Value", scrollContent, font, fontMat, FONT_SIZE_SUB);
+			fogLum = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnFogColorChanged).GetComponent<Slider>();
+			UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetFogAlbedo(Color.white, true), FONT_SIZE_NORMAL);
 		}
-		if (horizontal)
-		{
-			var scrollObj = CreateScrollbar(scrollView.transform, false);
-			scrollRect.horizontalScrollbar = scrollObj.GetComponent<Scrollbar>();
-		}
+		else
+			UIUtils.CreateLabel("Volumetrics are disabled", scrollContent, font, fontMat, FONT_SIZE_SUB);
+
+		UIUtils.CreateLabel("Background Color", scrollContent, font, fontMat, FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel("Hue", scrollContent, font, fontMat, FONT_SIZE_SUB);
+		backHue = UIUtils.CreateSlider(0.01f, 360, scrollContent, OnBackColorChanged).GetComponent<Slider>();
+		UIUtils.CreateLabel("Saturation", scrollContent, font, fontMat, FONT_SIZE_SUB);
+		backSat = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnBackColorChanged).GetComponent<Slider>();
+		UIUtils.CreateLabel("Value", scrollContent, font, fontMat, FONT_SIZE_SUB);
+		backLum = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnBackColorChanged).GetComponent<Slider>();
+		UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetBackColor(Color.white, true), FONT_SIZE_NORMAL);
+
+		UIUtils.CreateLabel("Ground Color", scrollContent, font, fontMat, FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel("Hue", scrollContent, font, fontMat, FONT_SIZE_SUB);
+		gndHue = UIUtils.CreateSlider(0, 360, scrollContent, OnGndColorChanged).GetComponent<Slider>();
+		UIUtils.CreateLabel("Saturation", scrollContent, font, fontMat, FONT_SIZE_SUB);
+		gndSat = UIUtils.CreateSlider(0, 100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
+		UIUtils.CreateLabel("Value", scrollContent, font, fontMat, FONT_SIZE_SUB);
+		gndLum = UIUtils.CreateSlider(0, 100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
+		UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetGroundColor(Color.white, true), FONT_SIZE_NORMAL);
+
+		UIUtils.CreateLabel("Toggles:", scrollContent, font, fontMat, FONT_SIZE_NORMAL);
+		UIUtils.CreateButton("Ground", scrollContent, font, fontMat, ToggleGround, FONT_SIZE_NORMAL);
+		UIUtils.CreateButton("Terrain", scrollContent, font, fontMat, ToggleTerrain, FONT_SIZE_NORMAL);
+		UIUtils.CreateButton("Frame", scrollContent, font, fontMat, ToggleFrame, FONT_SIZE_NORMAL);
+		UIUtils.CreateButton("Captions", scrollContent, font, fontMat, ToggleCaptions, FONT_SIZE_NORMAL);
 
 		return scrollView;
 	}
-	private static GameObject CreateScrollbar(Transform parent, bool isVertical)
+	private static GameObject CreateLightingUIBlock(Transform parent, TMP_FontAsset font, Material fontMat)
 	{
-		// Scrollbar
-		GameObject scrollbarObj = new("Scrollbar");
-		scrollbarObj.transform.SetParent(parent.transform);
-		RectTransform scrollbarRect = scrollbarObj.AddComponent<RectTransform>();
-		if (isVertical)
-		{
-			scrollbarRect.pivot = new Vector2(1, 1);
-			scrollbarRect.anchorMin = new Vector2(1, 0);
-			scrollbarRect.anchorMax = new Vector2(1, 1);
-		}
-		else
-		{
-			scrollbarRect.pivot = new Vector2(0, 0);
-			scrollbarRect.anchorMin = new Vector2(0, 0);
-			scrollbarRect.anchorMax = new Vector2(1, 0);
-		}
-		scrollbarRect.sizeDelta = Vector2.zero;
-		scrollbarRect.anchoredPosition = Vector2.zero;
-		Scrollbar scrollbar = scrollbarObj.AddComponent<Scrollbar>();
-		scrollbar.direction = isVertical ? Scrollbar.Direction.BottomToTop : scrollbar.direction = Scrollbar.Direction.RightToLeft;
+		GameObject lightContainer = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Env").transform.Find("Lights").gameObject;
 
-		// Background bar
-		GameObject background = new("Back Fill");
-		background.transform.SetParent(scrollbarObj.transform);
-		RectTransform backRect = background.AddComponent<RectTransform>();
-		if (isVertical)
+		GameObject lightingBlock = new("Lighting");
+		lightingBlock.transform.SetParent(parent);
+		RectTransform mainRect = lightingBlock.AddComponent<RectTransform>();
+		mainRect.pivot = new(1, 1);
+		mainRect.anchorMin = Vector2.zero;
+		mainRect.anchorMax = Vector2.one;
+		mainRect.anchoredPosition = new(0, 0);
+		mainRect.sizeDelta = new(0, 0);
+		VerticalLayoutGroup group = lightingBlock.AddComponent<VerticalLayoutGroup>();
+		group.spacing = 10;
+		group.padding = new(10, 10, 40, 40);
+		group.childForceExpandHeight = false;
+
+		UIUtils.CreateButton("Return to settings", lightingBlock.transform, font, fontMat, GotoMain, FONT_SIZE_NORMAL);
+		// TODO: Add "Create new light" button.
+		UIUtils.CreateLabel("Lights:", lightingBlock.transform, font, fontMat, FONT_SIZE_NORMAL);
+		UIUtils.CreateButton("Add light", lightingBlock.transform, font, fontMat, () =>
 		{
-			backRect.pivot = new Vector2(1, 1);
-			backRect.anchorMin = new Vector2(1, 0);
-			backRect.anchorMax = new Vector2(1, 1);
-			backRect.sizeDelta = new Vector2(15, 0);
-		}
-		else
-		{
-			backRect.pivot = new Vector2(0, 0);
-			backRect.anchorMin = new Vector2(0, 0);
-			backRect.anchorMax = new Vector2(1, 0);
-			backRect.sizeDelta = new Vector2(0, 15);
-		}
-		backRect.anchoredPosition = Vector2.zero;
-		Image backgroundImage = background.AddComponent<Image>();
-		backgroundImage.color = new Color(.5f, .5f, .5f);
+			GameObject light = SpawnLight(lightContainer.transform);
+			LightControl lightControl = CreateLightControl(light.GetComponent<Light>());
+			CreateLightContainer(lightsUIContainer.transform, lightControl, font, fontMat, false);
+		}, FONT_SIZE_NORMAL);
 
-		// Slider knob
-		GameObject handle = new("Handle");
-		handle.transform.SetParent(scrollbarObj.transform);
-		RectTransform handleRect = handle.AddComponent<RectTransform>();
-		handleRect.pivot = isVertical ? new Vector2(1, 1) : new Vector2(0, 0);
-		handleRect.sizeDelta = isVertical ? new Vector2(15, 0) : new Vector2(0, 15);
-		handleRect.anchoredPosition = Vector2.zero;
-		Image handleImage = handle.AddComponent<Image>();
-		handleImage.color = new Color(.9f, .9f, .9f);
+		GameObject scrollView = UIUtils.CreateScrollView(lightingBlock.transform, true, false);
+		scrollView.GetComponent<ScrollRect>().scrollSensitivity = 15;
+		LayoutElement scrollLayout = scrollView.AddComponent<LayoutElement>();
+		scrollLayout.flexibleWidth = 1;
+		scrollLayout.flexibleHeight = 1;
+		lightsUIContainer = scrollView.transform.GetChild(0).gameObject;
 
-		scrollbar.handleRect = handleRect;
-		// scrollbar.size = .1f;
+		// Populate the Lights list with whatever vanilla Light is active in the pattern.
+		ClearLightList();
+		ReloadUILights(lightContainer.transform, lightsUIContainer.transform, font, fontMat);
 
-		return scrollbarObj;
+		return lightingBlock;
 	}
-	private static GameObject CreateSlider(int maxValue, Transform parent, Action callable)
+	private static void ClearLightList()
 	{
-		GameObject sliderObj = new("Slider");
-		sliderObj.transform.SetParent(parent.transform);
-		Slider slider = sliderObj.AddComponent<Slider>();
-		slider.maxValue = maxValue;
-		slider.minValue = 0.01f;
-		slider.wholeNumbers = false;
-		slider.onValueChanged.AddListener((Action<float>)(value => callable()));
+		foreach (LightControl light in lights)
+			light.Destroy();
 
-		LayoutElement layout = sliderObj.AddComponent<LayoutElement>();
-		layout.minHeight = 20;
-		layout.preferredHeight = 20;
-		layout.flexibleWidth = 1;
-		layout.flexibleHeight = 0;
-
-		// Background bar
-		GameObject background = new("Back Fill");
-		background.transform.SetParent(sliderObj.transform);
-		RectTransform backRect = background.AddComponent<RectTransform>();
-		backRect.pivot = new Vector2(.5f, .5f);
-		backRect.anchorMin = new Vector2(0, .5f);
-		backRect.anchorMax = new Vector2(1, .5f);
-		backRect.sizeDelta = new Vector2(0, 20);
-		backRect.anchoredPosition = Vector2.zero;
-		Image backgroundImage = background.AddComponent<Image>();
-		backgroundImage.color = new Color(.7f, .7f, .7f, .6f);
-
-		// Filled progress bar
-		GameObject fill = new("Fill");
-		fill.transform.SetParent(slider.transform);
-		RectTransform fillRect = fill.AddComponent<RectTransform>();
-		fillRect.pivot = new Vector2(.5f, .5f);
-		fillRect.sizeDelta = new Vector2(0, 0);
-		fillRect.anchoredPosition = Vector2.zero;
-		Image fillImage = fill.AddComponent<Image>();
-		fillImage.color = new Color(.7f, .7f, .7f);
-
-		slider.fillRect = fillRect;
-
-		// Slider knob
-		GameObject handle = new("Handle");
-		handle.transform.SetParent(slider.transform);
-		RectTransform handleRect = handle.AddComponent<RectTransform>();
-		handleRect.pivot = new Vector2(.5f, .5f);
-		handleRect.sizeDelta = new Vector2(20, 8);
-		handleRect.anchoredPosition = Vector2.zero;
-		Image handleImage = handle.AddComponent<Image>();
-		// handleImage.color = new Color(.7f, .9f, 1);
-
-		slider.handleRect = handleRect;
-
-		// Transition FX
-		slider.transition = Selectable.Transition.ColorTint;
-		slider.targetGraphic = handleImage;
-		ColorBlock colorBlock = new()
-		{
-			normalColor = new Color(.7f, .9f, 1),
-			highlightedColor = new Color(.6f, .9f, 1, 1),
-			pressedColor = new Color(1, 1, 1, .6f),
-			selectedColor = new Color(.7f, .9f, 1),
-			disabledColor = new Color(1, 1, 1, 0),
-			colorMultiplier = 1,
-			fadeDuration = .1f
-		};
-		slider.colors = colorBlock;
-
-		return sliderObj;
+		lights.Clear();
 	}
-	private static GameObject CreateLabel(string text, Transform parent, TMP_FontAsset font, Material fontMat, int fontSize = -1)
+	private static void ReloadUILights(Transform lightContainer, Transform UIContainer, TMP_FontAsset font, Material fontMat)
 	{
-		GameObject hueLabel = new("Label: " + text);
-		hueLabel.transform.SetParent(parent.transform);
-		TextMeshProUGUI hueText = hueLabel.AddComponent<TextMeshProUGUI>();
-		hueText.font = font;
-		hueText.material = fontMat;
-		hueText.text = text;
-		if (fontSize != -1) hueText.fontSize = fontSize;
-
-		return hueLabel;
-	}
-	private static GameObject CreateButton(string text, Transform parent, TMP_FontAsset font, Material fontMat, Action callable, int fontSize = -1)
-	{
-		GameObject buttonObj = new("Button: " + text);
-		buttonObj.transform.SetParent(parent.transform);
-
-		Button button = buttonObj.AddComponent<Button>();
-		button.onClick.AddListener(callable);
-		RectTransform btnRect = buttonObj.AddComponent<RectTransform>();
-		btnRect.pivot = new Vector2(.5f, .5f);
-		btnRect.anchorMin = new Vector2(0, .5f);
-		btnRect.anchorMax = new Vector2(1, .5f);
-		// btnRect.anchoredPosition = Vector2.zero;
-		LayoutElement layout = buttonObj.AddComponent<LayoutElement>();
-		layout.preferredHeight = 40;
-		layout.flexibleWidth = 1;
-		Image image = buttonObj.AddComponent<Image>();
-		// image.color = new Color(.9f, .9f, .9f, 1);
-
-		GameObject textObj = new("Text");
-		textObj.transform.SetParent(buttonObj.transform);
-		RectTransform textRect = textObj.AddComponent<RectTransform>();
-		textRect.anchoredPosition = Vector2.zero;
-		TextMeshProUGUI buttonText = textObj.AddComponent<TextMeshProUGUI>();
-		buttonText.autoSizeTextContainer = true;
-		buttonText.font = font;
-		buttonText.material = fontMat;
-		buttonText.text = text;
-		buttonText.color = new Color(.1f, .1f, .1f);
-		if (fontSize != -1) buttonText.fontSize = fontSize;
-
-		button.transition = Selectable.Transition.ColorTint;
-		ColorBlock colorBlock = new()
+		Plugin.LogDebug("ReloadUILights In");
+		for (int i = 0; i < lightContainer.transform.childCount; i++)
 		{
-			normalColor = new Color(.9f, .9f, .9f),
-			highlightedColor = new Color(.8f, .9f, 1),
-			pressedColor = new Color(.2f, .8f, 1),
-			selectedColor = new Color(.9f, .9f, .9f),
-			disabledColor = new Color(.4f, .4f, .4f, .8f),
-			colorMultiplier = 1,
-			fadeDuration = .1f
-		};
-		button.colors = colorBlock;
-		button.targetGraphic = image;
+			var pattern = lightContainer.transform.GetChild(i).gameObject;
+			Plugin.LogInfo(pattern.active);
+			if (pattern.active)
+			{
+				for (int j = 0; j < pattern.transform.childCount; j++)
+				{
+					var lightObj = pattern.transform.GetChild(j).gameObject;
+					if (lightObj.active == false) continue;
+					if (lightObj.GetComponent<Light>())
+					{
+						Plugin.LogDebug("ReloadUILights Loop In");
+						LightControl lightControl = new(lightObj, true, null);
+						lights.Add(lightControl);
+						Plugin.LogDebug("ReloadUILights Light: " + lightControl);
+						GameObject container = CreateLightContainer(UIContainer, lightControl, font, fontMat, true);
+						lightControl.UIContainer = container;
+						Plugin.LogDebug("ReloadUILights Loop Out");
+					}
+				}
+			}
+		}
+		Plugin.LogDebug("ReloadUILights Out");
+	}
+	private static GameObject SpawnLight(Transform parent)
+	{
+		GameObject light = new("Light (Mod)");
+		light.transform.SetParent(parent);
+		light.AddComponent<Light>();
+		light.AddComponent<HDAdditionalLightData>();
+		return light;
+	}
+	private static LightControl CreateLightControl(Light light)
+	{
+		Plugin.LogDebug("CreateLightControl In");
+		LightControl lightControl = new(light.gameObject, false, new(0, 10, 0), Quaternion.Euler(Vector3.down), LightType.Spot, Color.white, 20, 20, 30, LightShadows.None, true, false);
+		lights.Add(lightControl);
+		Plugin.LogDebug("CreateLightControl Out");
+		return lightControl;
+	}
+	private static GameObject CreateLightContainer(Transform parent, LightControl light, TMP_FontAsset font, Material fontMat, bool isVanilla = false)
+	{
+		Plugin.LogDebug("CreateLightContainer In");
+		GameObject container = new("Light");
+		container.transform.SetParent(parent);
+		RectTransform rectMain = container.AddComponent<RectTransform>();
+		rectMain.pivot = new Vector2(0, 1);
+		rectMain.anchorMin = new Vector2(0, 0);
+		rectMain.anchorMax = new Vector2(0, 1);
+		rectMain.anchoredPosition = Vector2.zero;
+		Image image = container.AddComponent<Image>();
+		image.color = new Color(.8f, .9f, 1, .15f);
+		VerticalLayoutGroup layout = container.AddComponent<VerticalLayoutGroup>();
+		layout.childControlHeight = true;
+		layout.childForceExpandHeight = false;
+		layout.spacing = 10;
+		layout.padding = new RectOffset(14, 14, 10, 10);
 
-		return buttonObj;
+		// Create controls
+		// Active
+		Plugin.LogDebug(light);
+		UIUtils.CreateButton("Toggle", container.transform, font, fontMat, () => light.SetActive(!light.Active), FONT_SIZE_NORMAL);
+
+		// Color
+		UIUtils.CreateLabel("Color:", container.transform, font, fontMat, FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel("Hue", container.transform, font, fontMat, FONT_SIZE_SUB);
+		Slider lightHue = UIUtils.CreateSlider(0.01f, 360, container.transform, null).GetComponent<Slider>();
+		UIUtils.CreateLabel("Saturation", container.transform, font, fontMat, FONT_SIZE_SUB);
+		Slider lightSat = UIUtils.CreateSlider(0.01f, 100, container.transform, null).GetComponent<Slider>();
+		UIUtils.CreateLabel("Value", container.transform, font, fontMat, FONT_SIZE_SUB);
+		Slider lightVal = UIUtils.CreateSlider(0.01f, 100, container.transform, null).GetComponent<Slider>();
+		if (isVanilla)
+			UIUtils.CreateButton("Reset color", container.transform, font, fontMat, () => SetLightColor(light, Color.white, lightHue, lightSat, lightVal, true), FONT_SIZE_NORMAL);
+
+		// Position and rotation
+		GameObject positionLabel = UIUtils.CreateLabel("Position", container.transform, font, fontMat, FONT_SIZE_NORMAL);
+		List<InputField> posArr = UIUtils.CreateVec3Input(container.transform);
+		GameObject positionGroup = posArr[0].transform.parent.gameObject;
+
+		GameObject rotationLabel = UIUtils.CreateLabel("Rotation", container.transform, font, fontMat, FONT_SIZE_NORMAL);
+		List<InputField> rotArr = UIUtils.CreateVec2Input(container.transform);
+		GameObject rotationGroup = rotArr[0].transform.parent.gameObject;
+
+		// Light type
+		UIUtils.CreateLabel("Light type", container.transform, font, fontMat, FONT_SIZE_NORMAL);
+		Dropdown dropdown = UIUtils.CreateDropdown(["Spot", "Point", "Directional"], container.transform, font, fontMat, null, FONT_SIZE_NORMAL).GetComponent<Dropdown>();
+
+		// Amplitude (spotAngle), range and intensity
+		GameObject amplitudeLabel = UIUtils.CreateLabel("Amplitude", container.transform, font, fontMat, FONT_SIZE_SUB);
+		Slider amplitude = UIUtils.CreateSlider(0, 180, container.transform, (value) => light.SetAmplitude(value)).GetComponent<Slider>();
+		GameObject rangeLabel = UIUtils.CreateLabel("Range", container.transform, font, fontMat, FONT_SIZE_SUB);
+		Slider range = UIUtils.CreateSlider(0, 100, container.transform, (value) => light.SetRange(value)).GetComponent<Slider>();
+		UIUtils.CreateLabel("Intensity", container.transform, font, fontMat, FONT_SIZE_SUB);
+		Slider intensity = UIUtils.CreateSlider(0, 100_000_000, container.transform, (value) => light.SetIntensity(value)).GetComponent<Slider>();
+
+		// Shadows and volumetrics
+		UIUtils.CreateButton("Toggle shadows", container.transform, font, fontMat, () => light.SetShadows(light.Shadows == LightShadows.None ? LightShadows.Hard : LightShadows.None), FONT_SIZE_NORMAL);
+		if (ModSettings.confVolumetrics.Value != ModSettings.DioramaOnlyEnum.off)
+			UIUtils.CreateButton("Toggle volumetrics", container.transform, font, fontMat, () => light.SetVolumetrics(!light.Volumetrics), FONT_SIZE_NORMAL);
+
+		if (isVanilla)
+			UIUtils.CreateButton("Reset parameters", container.transform, font, fontMat, () => ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotArr), FONT_SIZE_NORMAL);
+		if (!isVanilla)
+			UIUtils.CreateButton("Delete", container.transform, font, fontMat, () => DestroyLight(light), FONT_SIZE_NORMAL);
+
+		// UI events
+		lightHue.onValueChanged.AddListener((Action<float>)((_) => OnLightColorChanged(light, lightHue, lightSat, lightVal)));
+		lightSat.onValueChanged.AddListener((Action<float>)((_) => OnLightColorChanged(light, lightHue, lightSat, lightVal)));
+		lightVal.onValueChanged.AddListener((Action<float>)((_) => OnLightColorChanged(light, lightHue, lightSat, lightVal)));
+		foreach (var pos in posArr)
+			pos.onValueChange.AddListener((Action<string>)((str) => SetLightPosition(light, posArr[0], posArr[1], posArr[2])));
+		foreach (var rot in rotArr)
+			rot.onValueChange.AddListener((Action<string>)((str) => SetLightRotation(light, rotArr[0], rotArr[1])));
+		dropdown.onValueChanged.AddListener((Action<int>)((value) => OnLightTypeChanged(light, value, range, rangeLabel, amplitude, amplitudeLabel, positionGroup, positionLabel, rotationGroup, rotationLabel)));
+
+		// Reset controls to default
+		SetLightColor(light, Color.white, lightHue, lightSat, lightVal, true);
+		ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotArr);
+		OnLightTypeChanged(light, Utils.LightTypeToInt(light.Type), range, rangeLabel, amplitude, amplitudeLabel, positionGroup, positionLabel, rotationGroup, rotationLabel);
+		light.UIContainer = container;
+
+		Plugin.LogDebug("CreateLightContainer Out");
+		return container;
 	}
 
-	private static void OnFogColorChanged()
+	private static void GotoMain()
+	{
+		mainMenu.active = true;
+		environmentMenu.active = false;
+		lightingMenu.active = false;
+	}
+	private static void GotoEnvironment()
+	{
+		mainMenu.active = false;
+		environmentMenu.active = true;
+		lightingMenu.active = false;
+	}
+	private static void GotoLighting()
+	{
+		mainMenu.active = false;
+		environmentMenu.active = false;
+		lightingMenu.active = true;
+	}
+
+	private static void OnFogColorChanged(float _)
 	{
 		SetFogAlbedo(Color.HSVToRGB(fogHue.value / 360, fogSat.value / 100, fogLum.value / 100));
 	}
-	private static void OnBackColorChanged()
+	private static void OnBackColorChanged(float _)
 	{
 		SetBackColor(Color.HSVToRGB(backHue.value / 360, backSat.value / 100, backLum.value / 100));
 	}
-	private static void OnGndColorChanged()
+	private static void OnGndColorChanged(float _)
 	{
 		SetGroundColor(Color.HSVToRGB(gndHue.value / 360, gndSat.value / 100, gndLum.value / 100));
+	}
+	private static void OnLightColorChanged(LightControl light, Slider hueSlider, Slider satSlider, Slider valSlider)
+	{
+		Plugin.LogDebug("OnLightColorChanged In");
+		var color = Color.HSVToRGB(hueSlider.value / 360, satSlider.value / 100, valSlider.value / 100);
+		SetLightColor(light, color, hueSlider, satSlider, valSlider);
+		Plugin.LogDebug("OnLightColorChanged Out");
+	}
+	private static void OnLightTypeChanged(LightControl light, int type, Slider range, GameObject rangeLabel, Slider amplitude, GameObject amplitudeLabel, GameObject positionGroup, GameObject positionLabel, GameObject rotationGroup, GameObject rotationLabel)
+	{
+		range.gameObject.active = rangeLabel.active = type == 0 || type == 1; // Not dir
+		amplitude.gameObject.active = amplitudeLabel.active = type == 0; // Only spot
+		positionGroup.active = positionLabel.active = type == 0 || type == 1; // Not dir
+		rotationGroup.active = rotationLabel.active = type == 0 || type == 2; // Not point
+
+		light.SetType(type);
 	}
 
 	public static void SetFogAlbedo(Color color, bool reset = false)
@@ -507,6 +529,118 @@ public class DioramaEnvPatch
 
 		groundMat.color = color;
 	}
+	public static void SetLightColor(LightControl light, Color color, Slider hueSlider, Slider satSlider, Slider valSlider, bool reset = false)
+	{
+		Plugin.LogDebug("SetLightColor In");
+		if (reset)
+			color = light.defaults["color"];
+
+		Color.RGBToHSV(color, out float h, out float s, out float l);
+		if (reset)
+		{
+			hueSlider.SetValueWithoutNotify(h * 360);
+			satSlider.SetValueWithoutNotify(s * 100);
+			valSlider.SetValueWithoutNotify(l * 100);
+		}
+
+		hueSlider.fillRect.GetComponent<Image>().color = Color.HSVToRGB(h, 1, 1);
+		satSlider.fillRect.GetComponent<Image>().color = Color.HSVToRGB(h, s, 1);
+		valSlider.fillRect.GetComponent<Image>().color = Color.HSVToRGB(0, 0, l);
+
+		light.SetColor(color);
+		Plugin.LogDebug("SetLightColor Out");
+	}
+	public static void ResetLightParams(LightControl light, Dropdown dropdown, Slider amplitude, Slider range, Slider intensity, List<InputField> posArr, List<InputField> rotArr)
+	{
+		int type = 0;
+		switch (light.defaults["type"])
+		{
+			case LightType.Spot: type = 0; break;
+			case LightType.Point: type = 1; break;
+			case LightType.Directional: type = 2; break;
+		}
+		light.SetPosition(light.defaults["position"]);
+		light.SetRotation(light.defaults["rotation"]);
+		light.SetType(type);
+		light.SetAmplitude(light.defaults["amplitude"]);
+		light.SetRange(light.defaults["range"]);
+		light.SetIntensity(light.defaults["intensity"]);
+		light.SetVolumetrics(light.defaults["volumetrics"]);
+
+		dropdown.value = type;
+		amplitude.SetValueWithoutNotify(light.Amplitude);
+		range.SetValueWithoutNotify(light.UIRange);
+		intensity.SetValueWithoutNotify(light.UIIntensity);
+		for (int i = 0; i < posArr.Count; i++)
+			posArr[i].SetTextWithoutNotify(light.Position[i].ToString());
+		for (int i = 0; i < rotArr.Count; i++)
+			rotArr[i].SetTextWithoutNotify(light.Rotation[i].ToString());
+	}
+	public static void SetLightPosition(LightControl light, InputField x, InputField y, InputField z, bool reset = false)
+	{
+		Vector3 vec;
+		if (reset)
+		{
+			vec = light.defaults["position"];
+			x.SetTextWithoutNotify(((int)vec.x).ToString());
+			y.SetTextWithoutNotify(((int)vec.y).ToString());
+			z.SetTextWithoutNotify(((int)vec.z).ToString());
+			light.SetPosition(vec);
+			return;
+		}
+
+		int xPos = 0;
+		int yPos = 0;
+		int zPos = 0;
+		try
+		{
+			xPos = int.Parse(x.text);
+		}
+		catch (System.Exception) { }
+		try
+		{
+			yPos = int.Parse(y.text);
+		}
+		catch (System.Exception) { }
+		try
+		{
+			zPos = int.Parse(z.text);
+		}
+		catch (System.Exception) { }
+
+		vec = new(xPos, yPos, zPos);
+		light.SetPosition(vec);
+	}
+	public static void SetLightRotation(LightControl light, InputField x, InputField y, bool reset = false)
+	{
+		Quaternion quad;
+		if (reset)
+		{
+			quad = light.defaults["rotation"];
+			// x.SetTextWithoutNotify((quad * Vector3.forward).x.ToString());
+			// y.SetTextWithoutNotify((quad * Vector3.forward).y.ToString());
+			x.SetTextWithoutNotify(((int)quad.eulerAngles.x).ToString());
+			y.SetTextWithoutNotify(((int)quad.eulerAngles.y).ToString());
+			light.SetRotation(quad);
+			return;
+		}
+
+		int xRot = 0;
+		int yRot = 0;
+		try
+		{
+			xRot = int.Parse(x.text);
+		}
+		catch (System.Exception) { }
+		try
+		{
+			yRot = int.Parse(y.text);
+		}
+		catch (System.Exception) { }
+
+		quad = Quaternion.Euler(xRot, yRot, 0);
+		light.SetRotation(quad);
+	}
 
 	public static void ToggleTerrain()
 	{
@@ -543,5 +677,278 @@ public class DioramaEnvPatch
 	public static void ToggleCaptions(bool toSet)
 	{
 		var captions = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Caption").gameObject.active = toSet;
+	}
+
+	private static void DestroyLight(LightControl light)
+	{
+		lights.Remove(light);
+		light.Destroy();
+	}
+}
+
+public class LightControl
+{
+	private GameObject lightObject = null;
+	public bool vanilla = false;
+	public GameObject UIContainer = null;
+	private Light Data;
+	private HDAdditionalLightData HDData;
+	public Dictionary<string, dynamic> defaults = new()
+	{
+		{"position", Vector3.zero},
+		{"rotation", new Quaternion()},
+		{"type", LightType.Spot},
+		{"color", Color.white},
+		{"amplitude", 20},
+		{"range", 20},
+		{"intensity", 25000},
+		{"shadows", LightShadows.None},
+		{"volumetrics", false},
+	};
+
+	public GameObject LightObject { get => lightObject; }
+	public bool Active { get => lightObject ? lightObject.active : false; }
+	public Vector3 Position { get => lightObject ? lightObject.transform.position : new(); }
+	public Quaternion Rotation { get => lightObject ? lightObject.transform.rotation : new(); }
+	public LightType Type { get => Data ? Data.type : LightType.Spot; }
+	public Color Color { get => Data ? Data.color : Color.white; }
+	public float Amplitude { get => Data ? Data.spotAngle : 0; }
+	public float UIRange;
+	public float UIIntensity;
+	public float RealRange { get => Data ? Data.range : 0; }
+	public float RealIntensity { get => Data ? Data.intensity : 0; }
+	public LightShadows Shadows { get => Data ? Data.shadows : LightShadows.None; }
+	public bool Volumetrics { get => HDData ? HDData.affectsVolumetric : false; }
+
+	public LightControl(GameObject lightObject, bool vanilla, Vector3 position, Quaternion rotation, LightType type, Color color, float amplitude, float range, float intensity, LightShadows shadowType, bool hasHDData, bool volumetrics = false, GameObject UIContainer = null)
+	{
+		this.lightObject = lightObject;
+		this.vanilla = vanilla;
+		this.UIContainer = UIContainer;
+
+		lightObject.transform.position = position;
+		lightObject.transform.rotation = rotation;
+		Data = lightObject.GetComponent<Light>();
+		if (!Data)
+			throw new Exception("The GameObject provided to this LightControl does not contain a Light component.");
+		Data.type = type;
+		Data.color = color;
+		Data.spotAngle = amplitude;
+		UIRange = range;
+		SetRange(range);
+		UIIntensity = intensity;
+		SetIntensity(intensity);
+		Data.shadows = shadowType;
+
+		if (hasHDData)
+		{
+			HDData = lightObject.GetComponent<HDAdditionalLightData>();
+			if (!HDData)
+				throw new Exception("The GameObject provided to this LightControl does not contain a HDAdditionalLightData component, despite being marked as true during construction.");
+			HDData.affectsVolumetric = volumetrics;
+		}
+		SetDefaults();
+	}
+	public LightControl(GameObject lightObject, bool vanilla = false, GameObject UIContainer = null)
+	{
+		this.lightObject = lightObject;
+		this.UIContainer = UIContainer;
+		this.vanilla = vanilla;
+
+		Data = lightObject.GetComponent<Light>();
+		if (!Data)
+			throw new Exception("The GameObject provided to this LightControl does not contain a Light component.");
+
+		HDData = lightObject.GetComponent<HDAdditionalLightData>();
+		SetDefaults();
+	}
+
+	private bool ReacquireData()
+	{
+		if (!LightObject) return false;
+		Data = LightObject.GetComponent<Light>();
+		if (!Data) return false;
+		return true;
+	}
+	private bool ReacquireHDData()
+	{
+		if (!LightObject) return false;
+		HDData = LightObject.GetComponent<HDAdditionalLightData>();
+		if (!HDData) return false;
+		return true;
+	}
+
+	public bool SetActive(bool set)
+	{
+		if (!lightObject)
+			return false;
+		lightObject.active = set;
+		return true;
+	}
+	public bool SetPosition(Vector3 vec)
+	{
+		if (!lightObject) return false;
+		lightObject.transform.position = vec;
+		return true;
+	}
+	public bool SetRotation(Quaternion quad)
+	{
+		if (!lightObject) return false;
+		lightObject.transform.rotation = quad;
+		return true;
+	}
+	public bool SetType(int type)
+	{
+		if (!Data)
+			if (ReacquireData() == false) return false;
+		switch (type)
+		{
+			case 1:
+				if (Data.type == LightType.Point)
+					return true;
+				Data.type = LightType.Point;
+				SetRange(UIRange);
+				SetIntensity(UIIntensity);
+				break;
+			case 2:
+				if (Data.type == LightType.Directional)
+					return true;
+				Data.type = LightType.Directional;
+				SetRange(UIRange);
+				SetIntensity(UIIntensity);
+				break;
+			case 0:
+			default:
+				if (Data.type == LightType.Spot)
+					return true;
+				Data.type = LightType.Spot;
+				SetRange(UIRange);
+				SetIntensity(UIIntensity);
+				break;
+		}
+
+		return true;
+	}
+	public bool SetColor(Color set)
+	{
+		if (!Data)
+			if (ReacquireData() == false) return false;
+		Data.color = set;
+		return true;
+	}
+	public bool SetAmplitude(float set)
+	{
+		if (!Data)
+			if (ReacquireData() == false) return false;
+		Data.spotAngle = set;
+		return true;
+	}
+	public bool SetRange(float set)
+	{
+		if (!Data)
+			if (ReacquireData() == false) return false;
+
+		float realRange = 0;
+
+		switch (Data.type)
+		{
+			case LightType.Spot:
+				realRange = set / 2; break;
+			case LightType.Point:
+				realRange = set / 2; break;
+			case LightType.Directional:
+				realRange = set; break;
+		}
+
+		UIRange = set;
+		Data.range = realRange;
+		return true;
+	}
+	public bool SetIntensity(float set)
+	{
+		if (!Data)
+			if (ReacquireData() == false) return false;
+
+		float realIntensity = 0;
+		switch (Data.type)
+		{
+			case LightType.Spot:
+				realIntensity = set; break;
+			case LightType.Point:
+				realIntensity = set / 3; break;
+			case LightType.Directional:
+				realIntensity = set / 400; break;
+		}
+
+		UIIntensity = set;
+		Data.intensity = realIntensity;
+		return true;
+	}
+	public bool SetShadows(LightShadows set)
+	{
+		if (!Data)
+			if (ReacquireData() == false) return false;
+		Data.shadows = set;
+		return true;
+	}
+	public bool SetVolumetrics(bool set)
+	{
+		if (!HDData)
+			if (ReacquireHDData() == false) return false;
+		HDData.affectsVolumetric = set;
+		return true;
+	}
+	public void ReadDefaults()
+	{
+		lightObject.transform.position = defaults["position"];
+		lightObject.transform.rotation = defaults["rotation"];
+		Data.type = defaults["type"];
+		Data.color = defaults["color"];
+		Data.spotAngle = defaults["amplitude"];
+		SetRange(defaults["range"]);
+		SetIntensity(defaults["intensity"]);
+		Data.shadows = defaults["shadows"];
+		HDData?.affectsVolumetric = defaults["volumetrics"];
+	}
+	public void SetDefaults()
+	{
+		switch (Data.type)
+		{
+			case LightType.Spot:
+				UIRange = Data.range * 2;
+				UIIntensity = Data.intensity; break;
+			case LightType.Point:
+				UIRange = Data.range * 2;
+				UIIntensity = Data.intensity * 3; break;
+			case LightType.Directional:
+				UIRange = Data.range;
+				UIIntensity = Data.intensity * 400; break;
+		}
+
+		defaults["position"] = lightObject.transform.position;
+		defaults["rotation"] = lightObject.transform.rotation;
+		defaults["type"] = Data.type;
+		defaults["color"] = Data.color;
+		defaults["amplitude"] = Data.spotAngle;
+		defaults["range"] = UIRange;
+		defaults["intensity"] = UIIntensity;
+		defaults["shadows"] = Data.shadows;
+		defaults["volumetrics"] = HDData ? HDData.affectsVolumetric : false;
+	}
+	public void Destroy()
+	{
+		try
+		{
+			Plugin.LogDebug("Light.Destroy In");
+			if (!vanilla) lightObject?.active = false;//lightObject?.Destroy();
+			UIContainer?.name += " (Voided)";
+			UIContainer?.active = false;
+			Plugin.LogDebug("Light.Destroy Out");
+		}
+		catch (System.Exception ex)
+		{
+			Plugin.LogInfo("ERR: LightControl failed to destroy one of its properties.");
+			Plugin.Log.LogError(ex);
+		}
 	}
 }

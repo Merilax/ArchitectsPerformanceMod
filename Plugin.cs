@@ -16,7 +16,7 @@ namespace ArchPerformanceMod;
 public class Plugin : BasePlugin
 {
     internal static new ManualLogSource Log;
-    private static readonly bool verboseLogging = true;
+    private static readonly bool verboseLogging = false;
     public static ConfigFile config;
     public override void Load()
     {

@@ -35,6 +35,25 @@ public class Utils
         }
         input.navigation = nav;
     }
+
+    public static int LightTypeToInt(LightType type)
+    {
+        return type switch
+        {
+            LightType.Point => 1,
+            LightType.Directional => 2,
+            _ => 0,
+        };
+    }
+    public static LightType IntToLightType(int type)
+    {
+        return type switch
+        {
+            1 => LightType.Point,
+            2 => LightType.Directional,
+            _ => LightType.Spot,
+        };
+    }
 }
 
 public enum NavDirEnum { UP, RIGHT, DONW, LEFT }
