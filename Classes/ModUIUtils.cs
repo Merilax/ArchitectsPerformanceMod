@@ -25,7 +25,7 @@ public static class UIUtils
 		scrollRect.vertical = vertical;
 		scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 		scrollRect.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-		scrollRect.scrollSensitivity = 5;
+		scrollRect.scrollSensitivity = 10;
 		RectMask2D mask2D = scrollView.AddComponent<RectMask2D>();
 
 		// Content
@@ -45,7 +45,7 @@ public static class UIUtils
 		groupContent.childControlWidth = true;
 		groupContent.childAlignment = TextAnchor.UpperLeft;
 		// groupContent.padding = new RectOffset(20, 20, 80, 80);
-		groupContent.spacing = 14;
+		groupContent.spacing = 12;
 		ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
 		fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 		fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -210,16 +210,16 @@ public static class UIUtils
 	}
 	public static GameObject CreateLabel(string text, Transform parent, TMP_FontAsset font, Material fontMat, int fontSize = -1)
 	{
-		GameObject hueLabel = new("Label: " + text);
-		hueLabel.transform.SetParent(parent.transform);
-		TextMeshProUGUI hueText = hueLabel.AddComponent<TextMeshProUGUI>();
-		hueText.font = font;
-		hueText.material = fontMat;
-		hueText.text = text;
-		if (fontSize != -1) hueText.fontSize = fontSize;
+		GameObject label = new("Label: " + text);
+		label.transform.SetParent(parent.transform);
+		TextMeshProUGUI textMesh = label.AddComponent<TextMeshProUGUI>();
+		textMesh.font = font;
+		textMesh.material = fontMat;
+		textMesh.text = text;
+		if (fontSize != -1) textMesh.fontSize = fontSize;
 
 		Plugin.LogDebug("CreateLabel Out");
-		return hueLabel;
+		return label;
 	}
 	public static GameObject CreateButton(string text, Transform parent, TMP_FontAsset font, Material fontMat, Action callable, int fontSize = -1)
 	{
@@ -238,12 +238,15 @@ public static class UIUtils
 		layout.preferredHeight = 34;
 		layout.flexibleWidth = 1;
 		Image image = buttonObj.AddComponent<Image>();
-		// image.color = new Color(.9f, .9f, .9f, 1);
+		image.color = new Color(.9f, .9f, .9f, 1);
 
 		GameObject textObj = new("Text");
 		textObj.transform.SetParent(buttonObj.transform);
 		RectTransform textRect = textObj.AddComponent<RectTransform>();
+		textRect.anchorMin = new(0, 0);
+		textRect.anchorMax = new(1, 1);
 		textRect.anchoredPosition = Vector2.zero;
+		textRect.sizeDelta = new(0, 0);
 		TextMeshProUGUI buttonText = textObj.AddComponent<TextMeshProUGUI>();
 		// buttonText.autoSizeTextContainer = true;
 		buttonText.font = font;
@@ -270,8 +273,10 @@ public static class UIUtils
 		Plugin.LogDebug("CreateButton Out");
 		return buttonObj;
 	}
-	public static GameObject CreateDropdown(List<string> items, Transform parent, TMP_FontAsset font, Material fontMat, Action<int> callable, int fontSize = -1)
+	public static GameObject CreateDropdown(List<string> items, Transform parent, Action<int> callable, int fontSize = -1)
 	{
+		if (fontSize == -1) fontSize = 20;
+
 		GameObject dropObj = new("Dropdown");
 		dropObj.transform.SetParent(parent.transform);
 		RectTransform btnRect = dropObj.AddComponent<RectTransform>();
@@ -397,15 +402,15 @@ public static class UIUtils
 		return dropObj;
 	}
 
-	public static List<InputField> CreateVec2Input(Transform parent)
+	public static List<InputField> CreateVec2Input(Transform parent, InputField.ContentType contentType, int charLimit)
 	{
-		return CreateArrayInput(parent, 2);
+		return CreateArrayInput(parent, 2, contentType, charLimit);
 	}
-	public static List<InputField> CreateVec3Input(Transform parent)
+	public static List<InputField> CreateVec3Input(Transform parent, InputField.ContentType contentType, int charLimit)
 	{
-		return CreateArrayInput(parent, 3);
+		return CreateArrayInput(parent, 3, contentType, charLimit);
 	}
-	public static List<InputField> CreateArrayInput(Transform parent, int count)
+	public static List<InputField> CreateArrayInput(Transform parent, int count, InputField.ContentType contentType, int charLimit)
 	{
 		GameObject container = new("Vec3 Input");
 		container.transform.SetParent(parent);
@@ -431,17 +436,20 @@ public static class UIUtils
 			LayoutElement inputLayout = input.AddComponent<LayoutElement>();
 			inputLayout.flexibleHeight = 1;
 			InputField field = input.AddComponent<InputField>();
-			field.contentType = InputField.ContentType.IntegerNumber;
+			field.contentType = contentType;
 			field.lineType = InputField.LineType.SingleLine;
-			field.characterLimit = 4;
+			field.characterLimit = 6;
 
 			GameObject textObj = new("Text");
 			textObj.transform.SetParent(input.transform);
 			RectTransform rectText = textObj.AddComponent<RectTransform>();
+			rectText.anchorMin = new(0, 0);
+			rectText.anchorMax = new(1, 1);
 			rectText.anchoredPosition = new(0, 0);
-			rect.offsetMin = new(-10, 0);
+			rectText.sizeDelta = new(-20, 0);
 			Text text = textObj.AddComponent<Text>();
-			text.font = Font.CreateDynamicFontFromOSFont("Arial", 30);
+			text.font = Font.CreateDynamicFontFromOSFont("Arial", 20);
+			text.fontSize = 20;
 			text.alignByGeometry = true;
 			text.alignment = TextAnchor.MiddleLeft;
 

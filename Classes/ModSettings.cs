@@ -182,8 +182,9 @@ public class ModSettings
 
 		GameObject textLabel = btn.transform.GetChild(1).gameObject;
 		textLabel.GetComponent<LocalizeStringEvent>().enabled = false;
-		textLabel.GetComponent<TextMeshProUGUI>().text = Localization.GetText(Localization.Items.MOD_BUTTON);
-		Localization.OnLocaleChanged += () => { if (textLabel) textLabel.GetComponent<TextMeshProUGUI>().text = Localization.GetText(Localization.Items.MOD_BUTTON); };
+		TextMeshProUGUI textComp = textLabel.GetComponent<TextMeshProUGUI>();
+		textComp.text = Localization.GetText(Localization.Items.MOD_BUTTON);
+		Localization.OnLocaleChanged += () => { textComp?.text = Localization.GetText(Localization.Items.MOD_BUTTON); };
 
 		btn.GetComponent<Button>().onClick.RemoveAllListeners();
 		btn.GetComponent<Button>().onClick.AddListener((System.Action)(() => OnShowModSettings()));
@@ -318,7 +319,7 @@ public class ModSettings
 
 		TextMeshProUGUI titleText = obj.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
 		titleText.text = Localization.GetText(title);
-		Localization.OnLocaleChanged += () => { if (obj) titleText.text = Localization.GetText(title); };
+		Localization.OnLocaleChanged += () => { titleText?.text = Localization.GetText(title); };
 
 		TextMeshProUGUI valueText = obj.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
 		valueText.text = "N/A";
@@ -418,7 +419,7 @@ public class ModSettings
 	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Start))]
 	public static void LoadConfig()
 	{
-		Localization.SetLocale(); // Config.Language
+		// Localization.SetLocale(); // Config.Language
 		config = Plugin.config;
 
 		confPreset = config.Bind("Graphics", "GraphicsPreset", PerformancePresets.Vanilla, "Preconfigured set of options.");
@@ -543,10 +544,13 @@ public class ModSettings
 		GraphicsSettings.useScriptableRenderPipelineBatching = true;
 		QualitySettings.lodBias = 0.75f;
 
+		bool disableVolumetrics = confVolumetrics.Value != DioramaOnlyEnum.on;
+		if (SceneManager.GetActiveScene().name == "Georama") disableVolumetrics = confVolumetrics.Value == DioramaOnlyEnum.off;
+
 		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
 			confReflections.Value != StrengthEnum.def, // SSR
 			confAmbientOcclusion.Value == ToggleEnum.off, // Ambient Occlusion
-			confVolumetrics.Value != DioramaOnlyEnum.on, // Volumetrics // Disabled if not on
+			disableVolumetrics, // Volumetrics // Disabled if not on
 			true, // Vol Clouds
 			true, // Subsurface Scattering
 			true, // Decals (already disabled by default)

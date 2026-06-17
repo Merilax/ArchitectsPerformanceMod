@@ -30,9 +30,6 @@ public class ModPerformance
 	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
 	public static void ApplyConfigurationInGame()
 	{
-		// GameObject env = GetEnvironmentObj();
-		// Volume vol = GetPostProcessVolume();
-
 		SetGlobalIllumination(ModSettings.confGlobalIllumination.Value);
 		SetReflections(ModSettings.confReflections.Value);
 		SetChromaAberration(ModSettings.confChromaAberration.Value);

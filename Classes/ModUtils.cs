@@ -22,6 +22,10 @@ public class Utils
     {
         obj?.transform.localScale = Vector3.one;
     }
+    public static float NormalizeAngle(float angle)
+    {
+        return angle > 180f ? angle - 360f : angle;
+    }
 
     public static void SetUINavigation(Selectable input, NavDirEnum direction, Selectable target)
     {

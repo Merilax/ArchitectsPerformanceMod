@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 
 namespace ArchPerformanceMod;
 
@@ -19,9 +20,6 @@ public class Localization
 		SET_SHADOWTONES_ENTRY, SET_DOCKLIGHTS_ENTRY, SET_AA_ENTRY, SET_MACHINEPARTICLES_ENTRY, SET_VOLUMETRICS,
 		PRESET_VANILLA, PRESET_OPTIMIZED, PRESET_OVERDRIVE, PRESET_CUSTOM,
 	}
-
-	public delegate void LocaleChanged();
-	public static event LocaleChanged OnLocaleChanged;
 
 	private readonly static Dictionary<Items, string> englishDict = new()
 	{
@@ -183,6 +181,11 @@ public class Localization
 		{Items.PRESET_CUSTOM, "自訂"},
 	};
 
+	public delegate void LocaleChanged();
+	public static event LocaleChanged OnLocaleChanged;
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(TranslationList), nameof(TranslationList.ChangeLanguage))]
 	public static void SetLocale() // Config.LanguageType lang
 	{
 		OnLocaleChanged?.Invoke();
@@ -190,6 +193,7 @@ public class Localization
 
 	public static string GetText(Items item)
 	{
+		Plugin.LogInfo(Config.Language);
 		return GetTextLocale(item, Config.Language);
 	}
 

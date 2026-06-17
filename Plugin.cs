@@ -30,12 +30,13 @@ public class Plugin : BasePlugin
         config = Config;
 
         var harmony = Harmony.CreateAndPatchAll(typeof(PluginInitializer));
+        harmony.PatchAll(typeof(Localization));
         harmony.PatchAll(typeof(QualityLevelPatch));
         harmony.PatchAll(typeof(GarageCameraPatch));
         harmony.PatchAll(typeof(ModSettings));
         harmony.PatchAll(typeof(ModPerformance));
         harmony.PatchAll(typeof(ModGameplay));
-        harmony.PatchAll(typeof(DioramaEnvPatch));
+        harmony.PatchAll(typeof(EnvironmentUIPatch));
         // harmony.PatchAll(typeof(TestPatch));
 
         Log.LogInfo($"Done.");
