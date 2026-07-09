@@ -193,7 +193,6 @@ public class Localization
 
 	public static string GetText(Items item)
 	{
-		Plugin.LogInfo(Config.Language);
 		return GetTextLocale(item, Config.Language);
 	}
 
@@ -208,9 +207,12 @@ public class Localization
 		};
 
 		bool ok = dict.TryGetValue(item, out string str);
-		if (ok) return str; // Return found item.
-		if (locale != Config.LanguageType.English) // Else, try again in English.
+		// Return found item.
+		if (ok) return str;
+		// Else, try again in English.
+		if (locale != Config.LanguageType.English)
 			return GetTextLocale(item, Config.LanguageType.English);
-		return "ERR: No Text"; // Else, since the default is English and nothing was found, return an error.
+		// Else, since the default is English and nothing was found, return an error.
+		return "ERR: No Text";
 	}
 }

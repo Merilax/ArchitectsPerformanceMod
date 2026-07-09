@@ -21,61 +21,61 @@
     <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.*" IncludeAssets="compile" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\lib\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="CoreModule">
-      <HintPath>..\lib\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\lib\UnityEngine.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineUI">
-      <HintPath>..\lib\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="InputSystem">
-      <HintPath>..\lib\Unity.InputSystem.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.InputSystem.dll</HintPath>
     </Reference>
     <Reference Include="UnityEnginePhysics">
-      <HintPath>..\lib\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineUIModule">
-      <HintPath>..\lib\UnityEngine.UIModule.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.UIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineUIElements">
-      <HintPath>..\lib\UnityEngine.UIElementsModule.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.UIElementsModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityLocalization">
-      <HintPath>..\lib\Unity.Localization.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.Localization.dll</HintPath>
     </Reference>
     <Reference Include="Il2Cppmscorlib">
-      <HintPath>..\lib\Il2Cppmscorlib.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Il2Cppmscorlib.dll</HintPath>
     </Reference>
     <Reference Include="TextMeshProUGUI">
-      <HintPath>..\lib\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineRendering">
-      <HintPath>..\lib\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineRenderingHD">
-      <HintPath>..\lib\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineRenderingHDConfig">
-      <HintPath>..\lib\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngineVFX">
-      <HintPath>..\lib\UnityEngine.VFXModule.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.VFXModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityCinemachine">
-      <HintPath>..\lib\Unity.Cinemachine.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Unity.Cinemachine.dll</HintPath>
     </Reference>
     <Reference Include="UnityTextRendering">
-      <HintPath>..\lib\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
     <Reference Include="FusionRuntime">
-      <HintPath>..\lib\Fusion.Runtime.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Fusion.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Crest">
-      <HintPath>..\lib\Crest.dll</HintPath>
+      <HintPath>..\lib\PUBLIC\Crest.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Text;
+using System.Text.Json;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -18,6 +20,8 @@ public class Plugin : BasePlugin
     internal static new ManualLogSource Log;
     private static readonly bool verboseLogging = false;
     public static ConfigFile config;
+    private static JsonSerializerOptions serializerOptions;
+    public static ConfigData customConfig = new();
     public override void Load()
     {
         Console.InputEncoding = Encoding.UTF8;
@@ -37,7 +41,15 @@ public class Plugin : BasePlugin
         harmony.PatchAll(typeof(ModPerformance));
         harmony.PatchAll(typeof(ModGameplay));
         harmony.PatchAll(typeof(EnvironmentUIPatch));
+
         // harmony.PatchAll(typeof(TestPatch));
+
+        serializerOptions = new JsonSerializerOptions() { WriteIndented = true, IncludeFields = true };
+        serializerOptions.Converters.Add(new ColorConverter());
+
+        bool configExists = File.Exists(Path.Join(Application.persistentDataPath, "/PerformanceModConfig.json"));
+        if (configExists) LoadConfig();
+        else SaveConfig();
 
         Log.LogInfo($"Done.");
     }
@@ -45,8 +57,50 @@ public class Plugin : BasePlugin
     public static void LogInfo(object data) => Log.LogInfo(data);
     public static void LogDebug(object data)
     {
-        if (verboseLogging) Log.LogInfo(data);
+        if (verboseLogging) LogInfo(data);
     }
+
+    public static void SaveConfig()
+    {
+        try
+        {
+            Log.LogInfo("Saving mod configuration.");
+            File.WriteAllText(Path.Join(Application.persistentDataPath, "/PerformanceModConfig.json"), JsonSerializer.Serialize(customConfig, serializerOptions));
+        }
+        catch (System.Exception ex)
+        {
+            Log.LogError(ex);
+        }
+    }
+    private static void LoadConfig()
+    {
+        try
+        {
+            Log.LogInfo("Loading mod configuration.");
+            customConfig = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(Path.Join(Application.persistentDataPath, "/PerformanceModConfig.json")), serializerOptions);
+        }
+        catch (System.Exception ex)
+        {
+            Log.LogError(ex);
+        }
+    }
+}
+
+public class ConfigData
+{
+    // Diorama
+    public bool dioramaFog = true;
+    public bool dioramaTerrain = true;
+    public bool dioramaGround = true;
+    public bool dioramaFrame = true;
+    public bool dioramaCaptions = true;
+    public Color dioramaFogColor = new(0.255f, 0.255f, 0.255f, 1);
+    public Color dioramaBackgroundColor = new(1f, 1f, 1f, 1f);
+    public Color dioramaGroundColor = new(0.392f, 0.392f, 0.392f, 1f);
+
+    // Designer
+    public bool designerFog = true;
+    public Color designerGroundColor = new(0.392f, 0.392f, 0.392f, 1f);
 }
 
 public class PluginInitializer
@@ -55,20 +109,19 @@ public class PluginInitializer
     public static Material mainFontMaterial;
     private static GameObject modSignature1;
     private static GameObject modSignature2;
-    // private static bool init = false;
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Start))]
     public static void Initialize(ref Scene_MainMenu __instance)
     {
-        // if (init) return;
         Plugin.LogInfo($"Preparing mod...");
+
+
 
         Cursor.lockState = CursorLockMode.Confined;
 
         AddModSignature(ref __instance);
 
-        // init = true;
         Plugin.LogInfo($"Mod initialized.");
     }
     public static void AddModSignature(ref Scene_MainMenu __instance)

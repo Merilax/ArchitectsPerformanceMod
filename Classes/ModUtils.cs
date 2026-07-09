@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using System.Text.Json.Serialization;
+using System;
+using System.Text.Json;
 
 namespace ArchPerformanceMod;
 
@@ -57,6 +60,31 @@ public class Utils
             2 => LightType.Directional,
             _ => LightType.Spot,
         };
+    }
+
+
+}
+
+public class ColorConverter : JsonConverter<Color>
+{
+    public override Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        string val = reader.GetString();
+        string[] arr = val.Split(':');
+        try
+        {
+            return new Color(float.Parse(arr[0]), float.Parse(arr[1]), float.Parse(arr[2]), float.Parse(arr[3]));
+        }
+        catch (System.Exception)
+        {
+            return Color.black;
+        }
+    }
+
+    public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
+    {
+        string val = $"{value.r}:{value.g}:{value.b}:{value.a}";
+        writer.WriteStringValue(val);
     }
 }
 

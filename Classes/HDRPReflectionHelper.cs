@@ -34,6 +34,8 @@ internal static class HDRPReflectionHelper
 
     internal static object RenderPipelineSettingsRef;
     internal static Type RenderPipelineSettingsType;
+    internal static object DynamicResolutionSettingsRef;
+    internal static Type DynamicResolutionSettingsType;
 
     internal static PropertyInfo PropCurrentPlatformRenderPipelineSettings;
 
@@ -48,6 +50,7 @@ internal static class HDRPReflectionHelper
     internal static PropertyInfo PropSupportSSRTransparent;
     internal static PropertyInfo PropSupportDataDrivenLensFlare;
     internal static PropertyInfo PropSupportScreenSpaceLensFlare;
+    internal static PropertyInfo PropEnableDLSS;
 
     // ------------------------------------------------------------------
     //  HDRP Shadow Init Parameters (hdShadowInitParams on RenderPipelineSettings)
@@ -69,13 +72,9 @@ internal static class HDRPReflectionHelper
     // ------------------------------------------------------------------
     //  Debug logging helper
     // ------------------------------------------------------------------
-    private static bool Debug => true;
 
-    private static void DebugLog(string msg)
-    {
-        if (Debug)
-            Plugin.LogDebug($"[Debug] {msg}");
-    }
+    private static bool Debug => false;
+    private static void DebugLog(string msg) { if (Debug) Plugin.LogInfo($"[dbg] {msg}"); }
 
     // ==================================================================
     //  Cache HDRP reflection
@@ -188,6 +187,20 @@ internal static class HDRPReflectionHelper
         PropSupportSSRTransparent = FindProp(st, "supportSSRTransparent");
         PropSupportDataDrivenLensFlare = FindProp(st, "supportDataDrivenLensFlare");
         PropSupportScreenSpaceLensFlare = FindProp(st, "supportScreenSpaceLensFlare");
+
+        try
+        {
+            DynamicResolutionSettingsRef = FindProp(st, "dynamicResolutionSettings").GetValue(RenderPipelineSettingsRef);
+            DynamicResolutionSettingsType = DynamicResolutionSettingsRef.GetType();
+
+            PropEnableDLSS = FindProp(DynamicResolutionSettingsType, "enableDLSS");
+            // PropEnableDLSS.SetValue(DynamicResolutionSettingsRef, true);
+        }
+        catch (System.Exception)
+        { }
+
+
+
     }
 
     /// <summary>
@@ -308,21 +321,24 @@ internal static class HDRPReflectionHelper
     //  Pipeline support flag writes (PRIMARY optimization mechanism)
     // ==================================================================
 
-    internal static int WriteSupportFlagBatch(
-        List<(PropertyInfo prop, string name, bool value)> flags)
+    internal static int WriteSupportFlagBatch(List<(PropertyInfo prop, string name, bool value, object subProp)> flags)
     {
         if (RenderPipelineSettingsRef == null) return 0;
 
         int changed = 0;
-        foreach (var (prop, name, value) in flags)
+        foreach (var (prop, name, value, subProp) in flags)
         {
             if (prop == null) continue;
             try
             {
-                bool current = SafeGetBool(prop, RenderPipelineSettingsRef);
+                var refObject = RenderPipelineSettingsRef;
+                if (subProp != null)
+                    refObject = subProp;
+
+                bool current = SafeGetBool(prop, refObject);
                 if (current == value) continue;
 
-                prop.SetValue(RenderPipelineSettingsRef, value);
+                prop.SetValue(refObject, value);
                 changed++;
 
                 DebugLog(
@@ -372,29 +388,21 @@ internal static class HDRPReflectionHelper
             return;
         }
 
-        var flags = new List<(PropertyInfo prop, string name, bool value)>();
+        var flags = new List<(PropertyInfo prop, string name, bool value, object subProp)>
+        {
+            (PropSupportSSR, "supportSSR", !disableSSR, null),
+            (PropSupportSSAO, "supportSSAO", !disableSSAO, null),
+            (PropSupportVolumetrics, "supportVolumetrics", !disableVolumetrics, null),
+            (PropSupportVolumetricClouds, "supportVolumetricClouds", !disableVolumetricClouds, null),
+            (PropSupportSubsurfaceScattering, "supportSubsurfaceScattering", !disableSubsurfaceScattering, null),
+            (PropSupportDecals, "supportDecals", !disableDecals, null),
+            (PropSupportDistortion, "supportDistortion", !disableDistortion, null),
+            (PropSupportSSRTransparent, "supportSSRTransparent", !disableSSRTransparent, null),
+            (PropSupportScreenSpaceLensFlare, "supportScreenSpaceLensFlare", !disableScreenSpaceLensFlare, null),
+            (PropSupportDataDrivenLensFlare, "supportDataDrivenLensFlare", disableDataDrivenLensFlare, null),
 
-        // if (disableSSR) flags.Add((PropSupportSSR, "supportSSR", false));
-        // if (disableSSAO) flags.Add((PropSupportSSAO, "supportSSAO", false));
-        // if (disableVolumetrics) flags.Add((PropSupportVolumetrics, "supportVolumetrics", false));
-        // if (disableVolumetricClouds) flags.Add((PropSupportVolumetricClouds, "supportVolumetricClouds", false));
-        // if (disableSubsurfaceScattering) flags.Add((PropSupportSubsurfaceScattering, "supportSubsurfaceScattering", false));
-        // if (disableDecals) flags.Add((PropSupportDecals, "supportDecals", false));
-        // if (disableDistortion) flags.Add((PropSupportDistortion, "supportDistortion", false));
-        // if (disableSSRTransparent) flags.Add((PropSupportSSRTransparent, "supportSSRTransparent", false));
-        // if (disableScreenSpaceLensFlare) flags.Add((PropSupportScreenSpaceLensFlare, "supportScreenSpaceLensFlare", false));
-        // if (disableDataDrivenLensFlare) flags.Add((PropSupportDataDrivenLensFlare, "supportDataDrivenLensFlare", false));
-
-        flags.Add((PropSupportSSR, "supportSSR", !disableSSR));
-        flags.Add((PropSupportSSAO, "supportSSAO", !disableSSAO));
-        flags.Add((PropSupportVolumetrics, "supportVolumetrics", !disableVolumetrics));
-        flags.Add((PropSupportVolumetricClouds, "supportVolumetricClouds", !disableVolumetricClouds));
-        flags.Add((PropSupportSubsurfaceScattering, "supportSubsurfaceScattering", !disableSubsurfaceScattering));
-        flags.Add((PropSupportDecals, "supportDecals", !disableDecals));
-        flags.Add((PropSupportDistortion, "supportDistortion", !disableDistortion));
-        flags.Add((PropSupportSSRTransparent, "supportSSRTransparent", !disableSSRTransparent));
-        flags.Add((PropSupportScreenSpaceLensFlare, "supportScreenSpaceLensFlare", !disableScreenSpaceLensFlare));
-        flags.Add((PropSupportDataDrivenLensFlare, "supportDataDrivenLensFlare", disableDataDrivenLensFlare));
+            // (PropEnableDLSS, "enableDLSS", true, DynamicResolutionSettingsRef),
+        };
 
         int changed = WriteSupportFlagBatch(flags);
 
@@ -402,6 +410,31 @@ internal static class HDRPReflectionHelper
         {
             DebugLog("Pipeline support flags: all requested flags already at target values.");
         }
+
+        string[] arr = [];//"dynamicResolutionSettings"];//["postProcessSettings", "dynamicResolutionSettings", "postProcessQualitySettings", "lightSettings", "lightingQualitySettings"];
+        foreach (var item in arr)
+        {
+            DebugLog($"Name: {RenderPipelineSettingsType.GetProperty(item).Name} / Read: {RenderPipelineSettingsType} / Write: {RenderPipelineSettingsType}");
+            foreach (var p in RenderPipelineSettingsType.GetProperty(item).GetValue(RenderPipelineSettingsRef).GetType().GetProperties())
+            {
+                try
+                {
+                    DebugLog($"Name: {p.Name} / Read: {p.CanRead} / Write: {p.CanWrite}");
+                    DebugLog("Value: " + p.GetValue(RenderPipelineSettingsType.GetProperty(item).GetValue(RenderPipelineSettingsRef)).ToString());
+                }
+                catch (System.Exception)
+                {
+                    DebugLog("Err");
+                }
+            }
+            // DebugLog($"Name: {item.Name} / Read: {item.CanRead} / Write: {item.CanWrite}");
+            // DebugLog("Value: " + item.GetValue(RenderPipelineSettingsRef).ToString());
+        }
+
+        // PropSupport = FindProp(st, "supportSSGI");
+        // PropSupport = FindProp(st, "subsurfaceScatteringAttenuation ");
+        // PropSupport = FindProp(st, "supportMSAA");
+        // PropSupport = FindProp(st, "msaaSampleCount");
     }
 
     /// <summary>

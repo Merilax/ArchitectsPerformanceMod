@@ -35,17 +35,15 @@ public class GarageCameraPatch
 
 public class EnvironmentUIPatch()
 {
-	private static EnvironmentUI designerUI; // Remains forever
-	private static EnvironmentUI dioramaUI; // Gets destroyed
+	private static EnvironmentUI designerUI; // Remains forever (unless entering Diorama).
+	private static EnvironmentUI dioramaUI; // Destroyed on exit.
 
 	[HarmonyPostfix]
-	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Start))]
+	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Diorama_OpenMachineDesign))]
+	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Designer_Design))]
 	public static void PrepareDesignerUI()
 	{
-		BridgedSceneManager.OnSceneLoadComplete.AddListener((Action)(() =>
-		{
-			designerUI = new(false);
-		}));
+		designerUI = new(false);
 	}
 
 	[HarmonyPostfix]
@@ -67,6 +65,7 @@ public class EnvironmentUIPatch()
 	{
 		dioramaUI?.allowInteraction = false;
 		dioramaUI = null;
+		Plugin.SaveConfig();
 	}
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Designer_CloseDesigner))]
@@ -74,6 +73,7 @@ public class EnvironmentUIPatch()
 	{
 		designerUI?.allowInteraction = false;
 		designerUI = null;
+		Plugin.SaveConfig();
 	}
 
 	[HarmonyPostfix]
@@ -147,6 +147,12 @@ public class EnvironmentUI
 	private Slider gndSat;
 	private Slider gndLum;
 
+	// GameObjects
+	private GameObject groundObj;
+	private GameObject terrainObj;
+	private GameObject frameObj;
+	private GameObject captionObj;
+
 	public EnvironmentUI(bool isDioramaSet)
 	{
 		isDiorama = isDioramaSet;
@@ -157,35 +163,34 @@ public class EnvironmentUI
 	{
 		if (isDiorama)
 		{
-			ModSettings.LoadConfig();
-		}
-
-		Scene scene;
-		if (isDiorama)
-			scene = SceneManager.GetActiveScene();
-		else
-			scene = SceneManager.GetSceneByName("MainMenu");
-
-		var root = scene.GetRootGameObjects();
-		if (isDiorama)
-		{
+			Scene scene = SceneManager.GetSceneByName("Georama");
+			var root = scene.GetRootGameObjects();
 			cameraData = root.First(item => item.name == "Camera").GetComponent<HDAdditionalCameraData>();
 			root.First(item => item.name == "Env").transform.Find("Vol").Find("Enviroments").GetComponent<Volume>().profile.TryGet(out Fog fogComp);
 			fog = fogComp;
 			groundMat = root.First(item => item.name == "Ground").transform.GetChild(0).GetComponent<MeshRenderer>().material;
+
+			groundObj = root.First(e => e.name == "Ground").gameObject;
+			terrainObj = root.First(e => e.name == "Ground").transform.Find("Terrains").gameObject;
+			frameObj = root.First(e => e.name == "Frame").gameObject;
+			captionObj = root.First(e => e.name == "Caption").gameObject;
+
+			fog.active = Plugin.customConfig.dioramaFog;
+			groundObj.active = Plugin.customConfig.dioramaGround;
+			terrainObj.active = Plugin.customConfig.dioramaTerrain;
+			frameObj.active = Plugin.customConfig.dioramaFrame;
+			captionObj.active = Plugin.customConfig.dioramaCaptions;
 		}
 		else
 		{
+			Scene scene = SceneManager.GetSceneByName("MainMenu");
+			var root = scene.GetRootGameObjects();
 			cameraData = root.First(item => item.name == "Main Camera").GetComponent<HDAdditionalCameraData>();
 			root.First(item => item.name == "World_DesignOnly").transform.Find("Volume").GetComponent<Volume>().profile.TryGet(out Fog fogComp);
 			fog = fogComp;
 			groundMat = root.First(item => item.name == "World_DesignOnly").transform.Find("Stage_ForDesign").GetComponent<MeshRenderer>().materials[1]; // 0 - light, 1 - base
-		}
 
-		if (ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off)
-		{
-			fog.active = false;
-			if (isDiorama) cameraData.backgroundColorHDR = new Color(.55f, .45f, .45f, 1);
+			fog.active = Plugin.customConfig.designerFog;
 		}
 
 		lightSystem = new LightSystem();
@@ -200,7 +205,7 @@ public class EnvironmentUI
 		GameObject canvas;
 		if (isDiorama)
 		{
-			canvas = SceneManager.GetActiveScene().GetRootGameObjects().First(item => item.name == "Canvas");
+			canvas = SceneManager.GetSceneByName("Georama").GetRootGameObjects().First(item => item.name == "Canvas");
 			font = canvas.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().font;
 			fontMat = canvas.transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().fontSharedMaterial;
 		}
@@ -292,9 +297,10 @@ public class EnvironmentUI
 		gndLum = UIUtils.CreateSlider(0, 100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
 		UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetGroundColor(Color.white, true), UICommons.FONT_SIZE_NORMAL);
 
+		UIUtils.CreateLabel("Toggles:", scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton("Fog", scrollContent, font, fontMat, ToggleFog, UICommons.FONT_SIZE_NORMAL);
 		if (isDiorama)
 		{
-			UIUtils.CreateLabel("Toggles:", scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
 			UIUtils.CreateButton("Ground", scrollContent, font, fontMat, ToggleGround, UICommons.FONT_SIZE_NORMAL);
 			UIUtils.CreateButton("Terrain", scrollContent, font, fontMat, ToggleTerrain, UICommons.FONT_SIZE_NORMAL);
 			UIUtils.CreateButton("Frame", scrollContent, font, fontMat, ToggleFrame, UICommons.FONT_SIZE_NORMAL);
@@ -303,10 +309,17 @@ public class EnvironmentUI
 
 		if (isDiorama)
 		{
-			SetFogAlbedo(Color.white, true);
-			SetBackColor(Color.white, true);
+			// SetFogAlbedo(Color.white, true);
+			// SetBackColor(Color.white, true);
+			SetFogAlbedo(Plugin.customConfig.dioramaFogColor, false, true);
+			SetBackColor(Plugin.customConfig.dioramaBackgroundColor, false, true);
+			SetGroundColor(Plugin.customConfig.dioramaGroundColor, false, true);
 		}
-		SetGroundColor(Color.white, true);
+		else
+		{
+			// SetGroundColor(Color.white, true);
+			SetGroundColor(Plugin.customConfig.designerGroundColor, false, true);
+		}
 
 		Utils.RescaleUI(scrollView);
 		return scrollView;
@@ -316,7 +329,7 @@ public class EnvironmentUI
 		GameObject lightContainer;
 		if (isDiorama)
 		{
-			lightContainer = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Env").transform.Find("Lights").gameObject;
+			lightContainer = SceneManager.GetSceneByName("Georama").GetRootGameObjects().First(e => e.name == "Env").transform.Find("Lights").gameObject;
 		}
 		else
 		{
@@ -342,7 +355,10 @@ public class EnvironmentUI
 		{
 			GameObject light = LightSystem.SpawnLight(lightContainer.transform);
 			LightControl lightControl = lightSystem.CreateLightControl(light.GetComponent<Light>());
-			lightControl.SetPosition(new(0, 10, 1000));
+			if (isDiorama) lightControl.SetPosition(new(0, 10, 0));
+			else lightControl.SetPosition(new(0, 10, 1000));
+			lightControl.SetRotation(Quaternion.EulerAngles(new(90, 0, 0)));
+			lightControl.SetDefaults();
 			CreateLightContainer(lightsUIContainer.transform, lightControl, false);
 		}, UICommons.FONT_SIZE_NORMAL);
 
@@ -376,7 +392,7 @@ public class EnvironmentUI
 		layout.childControlHeight = true;
 		layout.childForceExpandHeight = false;
 		layout.spacing = 6;
-		layout.padding = new RectOffset(14, 14, 10, 10);
+		layout.padding = new RectOffset(10, 10, 10, 10);
 
 		// Create controls
 		// Active
@@ -394,14 +410,25 @@ public class EnvironmentUI
 		if (isVanilla)
 			UIUtils.CreateButton("Reset color", container.transform, font, fontMat, () => SetLightColor(light, Color.white, lightHue, lightSat, lightVal, true), UICommons.FONT_SIZE_NORMAL);
 
-		// Position and rotation
+		// Position
 		GameObject positionLabel = UIUtils.CreateLabel("Position", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
 		List<InputField> posArr = UIUtils.CreateVec3Input(container.transform, InputField.ContentType.DecimalNumber, 6);
 		GameObject positionGroup = posArr[0].transform.parent.gameObject;
 
+		// Rotation
 		GameObject rotationLabel = UIUtils.CreateLabel("Rotation", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-		List<InputField> rotArr = UIUtils.CreateVec2Input(container.transform, InputField.ContentType.DecimalNumber, 6); // TODO Test set back to 3
-		GameObject rotationGroup = rotArr[0].transform.parent.gameObject;
+		GameObject rotationGroup = new("Rotation Group");
+		rotationGroup.transform.SetParent(container.transform);
+		RectTransform rect = rotationGroup.AddComponent<RectTransform>();
+		rect.anchorMin = new(0, 0);
+		rect.anchorMax = new(1, 0);
+		LayoutElement rotLayout = rotationGroup.AddComponent<LayoutElement>();
+		rotLayout.flexibleWidth = 1;
+		VerticalLayoutGroup group = rotationGroup.AddComponent<VerticalLayoutGroup>();
+		group.spacing = 10;
+		group.padding = new(2, 2, 2, 2);
+		Slider rotYaw = UIUtils.CreateSlider(-180, 180, rotationGroup.transform, null).GetComponent<Slider>();
+		Slider rotPitch = UIUtils.CreateSlider(-180, 180, rotationGroup.transform, null).GetComponent<Slider>();
 
 		// Light type
 		UIUtils.CreateLabel("Light type", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
@@ -421,7 +448,7 @@ public class EnvironmentUI
 			UIUtils.CreateButton("Toggle volumetrics", container.transform, font, fontMat, () => light.SetVolumetrics(!light.Volumetrics), UICommons.FONT_SIZE_NORMAL);
 
 		if (isVanilla)
-			UIUtils.CreateButton("Reset parameters", container.transform, font, fontMat, () => ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotArr), UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton("Reset parameters", container.transform, font, fontMat, () => ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotYaw, rotPitch), UICommons.FONT_SIZE_NORMAL);
 		if (!isVanilla)
 			UIUtils.CreateButton("Delete", container.transform, font, fontMat, () => lightSystem?.DestroyLight(light), UICommons.FONT_SIZE_NORMAL);
 
@@ -431,13 +458,15 @@ public class EnvironmentUI
 		lightVal.onValueChanged.AddListener((Action<float>)((_) => OnLightColorChanged(light, lightHue, lightSat, lightVal)));
 		foreach (var pos in posArr)
 			pos.onValueChange.AddListener((Action<string>)((str) => SetLightPosition(light, posArr[0], posArr[1], posArr[2])));
-		foreach (var rot in rotArr)
-			rot.onValueChange.AddListener((Action<string>)((str) => SetLightRotation(light, rotArr[0], rotArr[1])));
+		// foreach (var rot in rotArr)
+		rotYaw.onValueChanged.AddListener((Action<float>)((str) => SetLightRotation(light, rotYaw, rotPitch)));
+		rotPitch.onValueChanged.AddListener((Action<float>)((str) => SetLightRotation(light, rotYaw, rotPitch)));
+
 		dropdown.onValueChanged.AddListener((Action<int>)((value) => OnLightTypeChanged(light, value, range, rangeLabel, amplitude, amplitudeLabel, positionGroup, positionLabel, rotationGroup, rotationLabel)));
 
 		// Reset controls to default
 		SetLightColor(light, Color.white, lightHue, lightSat, lightVal, true);
-		ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotArr);
+		ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotYaw, rotPitch);
 		OnLightTypeChanged(light, Utils.LightTypeToInt(light.Type), range, rangeLabel, amplitude, amplitudeLabel, positionGroup, positionLabel, rotationGroup, rotationLabel);
 		light.UIContainer = container;
 
@@ -535,15 +564,18 @@ public class EnvironmentUI
 
 	private void OnFogColorChanged(float _) // Diorama
 	{
-		SetFogAlbedo(Color.HSVToRGB(fogHue.value / 360, fogSat.value / 100, fogLum.value / 100));
+		Color color = Color.HSVToRGB(fogHue.value / 360, fogSat.value / 100, fogLum.value / 100);
+		SetFogAlbedo(color);
 	}
 	private void OnBackColorChanged(float _) // Diorama
 	{
-		SetBackColor(Color.HSVToRGB(backHue.value / 360, backSat.value / 100, backLum.value / 100));
+		Color color = Color.HSVToRGB(backHue.value / 360, backSat.value / 100, backLum.value / 100);
+		SetBackColor(color);
 	}
 	private void OnGndColorChanged(float _)
 	{
-		SetGroundColor(Color.HSVToRGB(gndHue.value / 360, gndSat.value / 100, gndLum.value / 100));
+		Color color = Color.HSVToRGB(gndHue.value / 360, gndSat.value / 100, gndLum.value / 100);
+		SetGroundColor(color);
 	}
 	private void OnLightColorChanged(LightControl light, Slider hueSlider, Slider satSlider, Slider valSlider)
 	{
@@ -562,14 +594,14 @@ public class EnvironmentUI
 		light.SetType(type);
 	}
 
-	public void SetFogAlbedo(Color color, bool reset = false) // Diorama
+	public void SetFogAlbedo(Color color, bool reset = false, bool update = false) // Diorama
 	{
 		if (reset)
 			color = new Color(.255f, .255f, .255f, 1);
 
 		Color.RGBToHSV(color, out float h, out float s, out float l);
 
-		if (reset)
+		if (update || reset)
 		{
 			fogHue.SetValueWithoutNotify(h * 360);
 			fogSat.SetValueWithoutNotify(s * 100);
@@ -581,15 +613,16 @@ public class EnvironmentUI
 		fogLum.fillRect.GetComponent<Image>().color = Color.HSVToRGB(0, 0, l);
 
 		fog.albedo.value = color;
+		Plugin.customConfig.dioramaFogColor = color;
 	}
-	public void SetBackColor(Color color, bool reset = false) // Diorama
+	public void SetBackColor(Color color, bool reset = false, bool update = false) // Diorama
 	{
 		if (reset)
 			color = new Color(1, 1, 1, 1);
 
 		Color.RGBToHSV(color, out float h, out float s, out float l);
 
-		if (reset)
+		if (update || reset)
 		{
 			backHue.SetValueWithoutNotify(h * 360);
 			backSat.SetValueWithoutNotify(s * 100);
@@ -601,14 +634,15 @@ public class EnvironmentUI
 		backLum.fillRect.GetComponent<Image>().color = Color.HSVToRGB(0, 0, l);
 
 		cameraData.backgroundColorHDR = color;
+		Plugin.customConfig.dioramaBackgroundColor = color;
 	}
-	public void SetGroundColor(Color color, bool reset = false)
+	public void SetGroundColor(Color color, bool reset = false, bool update = false)
 	{
 		if (reset)
 			color = new Color(.392f, .392f, .392f, 1);
 
 		Color.RGBToHSV(color, out float h, out float s, out float l);
-		if (reset)
+		if (update || reset)
 		{
 			gndHue.SetValueWithoutNotify(h * 360);
 			gndSat.SetValueWithoutNotify(s * 100);
@@ -620,15 +654,23 @@ public class EnvironmentUI
 		gndLum.fillRect.GetComponent<Image>().color = Color.HSVToRGB(0, 0, l);
 
 		groundMat.color = color;
+		if (isDiorama)
+		{
+			Plugin.customConfig.dioramaGroundColor = color;
+		}
+		else
+		{
+			Plugin.customConfig.designerGroundColor = color;
+		}
 	}
-	public void SetLightColor(LightControl light, Color color, Slider hueSlider, Slider satSlider, Slider valSlider, bool reset = false)
+	public void SetLightColor(LightControl light, Color color, Slider hueSlider, Slider satSlider, Slider valSlider, bool reset = false, bool update = false)
 	{
 		Plugin.LogDebug("SetLightColor In");
 		if (reset)
 			color = light.defaults["color"];
 
 		Color.RGBToHSV(color, out float h, out float s, out float l);
-		if (reset)
+		if (update || reset)
 		{
 			hueSlider.SetValueWithoutNotify(h * 360);
 			satSlider.SetValueWithoutNotify(s * 100);
@@ -642,7 +684,7 @@ public class EnvironmentUI
 		light.SetColor(color);
 		Plugin.LogDebug("SetLightColor Out");
 	}
-	public void ResetLightParams(LightControl light, Dropdown dropdown, Slider amplitude, Slider range, Slider intensity, List<InputField> posArr, List<InputField> rotArr)
+	public void ResetLightParams(LightControl light, Dropdown dropdown, Slider amplitude, Slider range, Slider intensity, List<InputField> posArr, Slider rotYaw, Slider rotPitch)
 	{
 		int type = 0;
 		switch (light.defaults["type"])
@@ -664,7 +706,7 @@ public class EnvironmentUI
 		range.SetValueWithoutNotify(light.UIRange);
 		intensity.SetValueWithoutNotify(light.UIIntensity);
 		SetLightPosition(light, posArr[0], posArr[1], posArr[2], true);
-		SetLightRotation(light, rotArr[0], rotArr[1], true);
+		SetLightRotation(light, rotYaw, rotPitch, true);
 	}
 	public void SetLightPosition(LightControl light, InputField x, InputField y, InputField z, bool reset = false)
 	{
@@ -707,71 +749,78 @@ public class EnvironmentUI
 
 		light.SetPosition(vec);
 	}
-	public void SetLightRotation(LightControl light, InputField x, InputField y, bool reset = false)
+	public void SetLightRotation(LightControl light, Slider x, Slider y, bool reset = false)
 	{
 		Quaternion quad;
 		if (reset)
 		{
 			quad = light.defaults["rotation"];
-			x.SetTextWithoutNotify(Utils.NormalizeAngle(quad.eulerAngles.x).ToString());
-			y.SetTextWithoutNotify(Utils.NormalizeAngle(quad.eulerAngles.y).ToString());
+			x.SetValueWithoutNotify(Utils.NormalizeAngle(quad.eulerAngles.x - 90));
+			y.SetValueWithoutNotify(Utils.NormalizeAngle(quad.eulerAngles.y));
 			light.SetRotation(quad);
 			return;
 		}
 
-		float xRot = 0;
-		float yRot = 0;
-		try
-		{
-			xRot = float.Parse(x.text);
-		}
-		catch (System.Exception) { }
-		try
-		{
-			yRot = float.Parse(y.text);
-		}
-		catch (System.Exception) { }
-
-		quad = Quaternion.Euler(xRot, yRot, 0);
+		quad = Quaternion.Euler(x.value + 90, y.value, 0);
 		light.SetRotation(quad);
 	}
 
 	// Diorama
+	public void ToggleFog()
+	{
+		fog.active = !fog.active;
+		if (isDiorama)
+			Plugin.customConfig.dioramaFog = fog.active;
+		else
+			Plugin.customConfig.designerFog = fog.active;
+	}
 	public void ToggleTerrain()
 	{
-		var terrains = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Ground").transform.Find("Terrains").gameObject;
-		terrains.active = !terrains.active;
+		terrainObj.active = !terrainObj.active;
+		Plugin.customConfig.dioramaTerrain = terrainObj.active;
 	}
 	public void ToggleGround()
 	{
-		var ground = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Ground").gameObject;
-		ground.active = !ground.active;
+		groundObj.active = !groundObj.active;
+		Plugin.customConfig.dioramaGround = groundObj.active;
 	}
 	public void ToggleFrame()
 	{
-		var frame = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Frame").gameObject;
-		frame.active = !frame.active;
+		frameObj.active = !frameObj.active;
+		Plugin.customConfig.dioramaFrame = frameObj.active;
 	}
 	public void ToggleCaptions()
 	{
-		var captions = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Caption").gameObject;
-		captions.active = !captions.active;
+		captionObj.active = !captionObj.active;
+		Plugin.customConfig.dioramaCaptions = captionObj.active;
+	}
+	public void ToggleFog(bool toSet)
+	{
+		fog.active = toSet;
+		if (isDiorama)
+			Plugin.customConfig.dioramaFog = toSet;
+		else
+			Plugin.customConfig.designerFog = toSet;
 	}
 	public void ToggleTerrain(bool toSet)
 	{
-		var terrains = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Ground").transform.Find("Terrains").gameObject.active = toSet;
+		terrainObj.active = toSet;
+		Plugin.customConfig.dioramaTerrain = toSet;
 	}
 	public void ToggleGround(bool toSet)
 	{
-		var ground = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Ground").gameObject.active = toSet;
+		groundObj.active = toSet;
+		Plugin.customConfig.dioramaGround = toSet;
 	}
 	public void ToggleFrame(bool toSet)
 	{
-		var frame = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Frame").gameObject.active = toSet;
+		frameObj.active = toSet;
+		Plugin.customConfig.dioramaFrame = toSet;
 	}
 	public void ToggleCaptions(bool toSet)
 	{
-		var captions = SceneManager.GetActiveScene().GetRootGameObjects().First(e => e.name == "Caption").gameObject.active = toSet;
+		captionObj.active = toSet;
+		Plugin.customConfig.dioramaCaptions = toSet;
 	}
 }
 
