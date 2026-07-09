@@ -309,15 +309,13 @@ public class EnvironmentUI
 
 		if (isDiorama)
 		{
-			// SetFogAlbedo(Color.white, true);
-			// SetBackColor(Color.white, true);
-			SetFogAlbedo(Plugin.customConfig.dioramaFogColor, false, true);
+			if (ModSettings.confVolumetrics.Value != ModSettings.DioramaOnlyEnum.off)
+				SetFogAlbedo(Plugin.customConfig.dioramaFogColor, false, true);
 			SetBackColor(Plugin.customConfig.dioramaBackgroundColor, false, true);
 			SetGroundColor(Plugin.customConfig.dioramaGroundColor, false, true);
 		}
 		else
 		{
-			// SetGroundColor(Color.white, true);
 			SetGroundColor(Plugin.customConfig.designerGroundColor, false, true);
 		}
 
@@ -596,6 +594,9 @@ public class EnvironmentUI
 
 	public void SetFogAlbedo(Color color, bool reset = false, bool update = false) // Diorama
 	{
+		if (ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off) return;
+		if (ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.dioramaOnly && !isDiorama) return;
+
 		if (reset)
 			color = new Color(.255f, .255f, .255f, 1);
 

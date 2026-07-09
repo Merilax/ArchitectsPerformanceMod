@@ -42,8 +42,6 @@ public class Plugin : BasePlugin
         harmony.PatchAll(typeof(ModGameplay));
         harmony.PatchAll(typeof(EnvironmentUIPatch));
 
-        // harmony.PatchAll(typeof(TestPatch));
-
         serializerOptions = new JsonSerializerOptions() { WriteIndented = true, IncludeFields = true };
         serializerOptions.Converters.Add(new ColorConverter());
 

@@ -545,7 +545,6 @@ public class ModSettings
 		QualitySettings.lodBias = 0.75f;
 
 		bool disableVolumetrics = confVolumetrics.Value != DioramaOnlyEnum.on;
-		if (SceneManager.GetActiveScene().name == "Georama") disableVolumetrics = confVolumetrics.Value == DioramaOnlyEnum.off;
 
 		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
 			confReflections.Value != StrengthEnum.def, // SSR
@@ -576,6 +575,20 @@ public class ModSettings
 	public static void ResetMainConditionals()
 	{
 		delayedInit = false;
+		bool disableVolumetrics = confVolumetrics.Value == DioramaOnlyEnum.off;
+
+		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
+			confReflections.Value != StrengthEnum.def, // SSR
+			confAmbientOcclusion.Value == ToggleEnum.off, // Ambient Occlusion
+			disableVolumetrics, // Volumetrics // Disabled if not on
+			true, // Vol Clouds
+			true, // Subsurface Scattering
+			true, // Decals (already disabled by default)
+			confMachineParticles.Value != QuantityEnum.full, // Distortion
+			confReflections.Value != StrengthEnum.def, // SSR Transparency
+			confReflections.Value != StrengthEnum.def, // Screen Space Lens Flare
+			confReflections.Value != StrengthEnum.def  // Data Driven Lens Flare
+		);
 	}
 
 	[HarmonyPostfix]
