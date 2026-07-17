@@ -62,7 +62,7 @@ public class Plugin : BasePlugin
     {
         try
         {
-            Log.LogInfo("Saving mod configuration.");
+            Log.LogInfo("Saving additional mod configuration.");
             File.WriteAllText(Path.Join(Application.persistentDataPath, "/PerformanceModConfig.json"), JsonSerializer.Serialize(customConfig, serializerOptions));
         }
         catch (System.Exception ex)
@@ -74,7 +74,7 @@ public class Plugin : BasePlugin
     {
         try
         {
-            Log.LogInfo("Loading mod configuration.");
+            Log.LogInfo("Loading additional mod configuration.");
             customConfig = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(Path.Join(Application.persistentDataPath, "/PerformanceModConfig.json")), serializerOptions);
         }
         catch (System.Exception ex)
@@ -113,8 +113,6 @@ public class PluginInitializer
     public static void Initialize(ref Scene_MainMenu __instance)
     {
         Plugin.LogInfo($"Preparing mod...");
-
-
 
         Cursor.lockState = CursorLockMode.Confined;
 

@@ -12,10 +12,12 @@ public class ModPerformance
 {
 	public static GameObject GetEnvironmentObj()
 	{
-		if (SceneManager.GetActiveScene().name == "Georama")
-			return SceneManager.GetActiveScene().GetRootGameObjects().First(item => item.name == "Env");
-
-		return SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Enviroment");
+		Scene diorama = SceneManager.GetSceneByName("Georama");
+		if (diorama.IsValid())
+		{
+			return diorama.GetRootGameObjects().First(item => item.name == "Env");
+		}
+		else return SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Enviroment");
 	}
 	public static Volume GetPostProcessVolume()
 	{
@@ -28,35 +30,45 @@ public class ModPerformance
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
-	public static void ApplyConfigurationInGame()
+	public static void ApplyConfigInDiorama()
 	{
-		SetGlobalIllumination(ModSettings.confGlobalIllumination.Value);
-		SetReflections(ModSettings.confReflections.Value);
+		SetGlobalIllumination(Config.UseGI);
+		// SetGlobalIllumination(ModSettings.confGlobalIllumination.Value);
+		// SetReflections(ModSettings.confReflections.Value);
 		SetChromaAberration(ModSettings.confChromaAberration.Value);
 		SetVignette(ModSettings.confVignette.Value);
 		SetShadowTones(ModSettings.confShadowTones.Value);
-		SetDockLights(ModSettings.confDockLights.Value);
+		// SetDockLights(ModSettings.confDockLights.Value);
 		SetAntialiasing(ModSettings.confAntialiasing.Value);
 		SetShadowQuality(ModSettings.confShadowQuality.Value);
-		SetMachineParticles(ModSettings.confMachineParticles.Value);
+		// SetMachineParticles(ModSettings.confMachineParticles.Value);
+
+		bool disableVolumetrics = ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off;
+
+		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR
+			ModSettings.confAmbientOcclusion.Value == ModSettings.ToggleEnum.off, // Ambient Occlusion
+			disableVolumetrics, // Volumetrics // Disabled if not on
+			true, // Vol Clouds
+			true, // Subsurface Scattering
+			true, // Decals (already disabled by default)
+			ModSettings.confMachineParticles.Value != ModSettings.QuantityEnum.full, // Distortion
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR Transparency
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // Screen Space Lens Flare
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def  // Data Driven Lens Flare
+		);
 	}
 
-	public static void SetGlobalIllumination(ModSettings.ToggleEnum toSet)
+	public static void SetGlobalIllumination(bool toSet)
 	{
-		bool input = toSet == ModSettings.ToggleEnum.on;
-
-		GetPostProcessVolume().profile.TryGet(out GlobalIllumination ilum);
-		ilum?.active = input;
-
-		if (SceneManager.GetActiveScene().name == "Georama")
+		var scene = SceneManager.GetSceneByName("Georama");
+		if (scene.IsValid())
 		{
+			GetPostProcessVolume().profile.TryGet(out GlobalIllumination ilum);
+			ilum?.active = toSet;
+
 			GetEnvironmentObj().transform.Find("Vol").Find("Enviroments").GetComponent<Volume>().profile.TryGet(out VisualEnvironment visualEnv);
-			visualEnv?.skyAmbientMode.value = input ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
-		}
-		else
-		{
-			GetEnvironmentObj().transform.Find("Vol").Find("Sky and Fog Volume").GetComponent<Volume>().profile.TryGet(out VisualEnvironment visualEnv);
-			visualEnv?.skyAmbientMode.value = input ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
+			visualEnv?.skyAmbientMode.value = toSet ? SkyAmbientMode.Dynamic : SkyAmbientMode.Static;
 		}
 	}
 
@@ -116,9 +128,10 @@ public class ModPerformance
 	{
 		Camera camera = null;
 		HDAdditionalCameraData cameraData = null;
-		if (SceneManager.GetActiveScene().name == "Georama")
+		Scene diorama = SceneManager.GetSceneByName("Georama");
+		if (diorama.IsValid())
 		{
-			var cameraObj = SceneManager.GetActiveScene().GetRootGameObjects().First(item => item.name == "Camera");
+			var cameraObj = diorama.GetRootGameObjects().First(item => item.name == "Camera");
 			camera = cameraObj.GetComponent<Camera>();
 			cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
 		}
@@ -129,12 +142,12 @@ public class ModPerformance
 			cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
 		}
 
-		camera.allowMSAA = true;
 		switch (toSet)
 		{
 			case ModSettings.AntialiasingEnum.FXAA:
 				cameraData.antialiasing = HDAdditionalCameraData.AntialiasingMode.FastApproximateAntialiasing; break;
 			case ModSettings.AntialiasingEnum.MSAA:
+				camera.allowMSAA = true;
 				cameraData.antialiasing = HDAdditionalCameraData.AntialiasingMode.SubpixelMorphologicalAntiAliasing; break;
 			case ModSettings.AntialiasingEnum.TAA:
 				cameraData.antialiasing = HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing; break;

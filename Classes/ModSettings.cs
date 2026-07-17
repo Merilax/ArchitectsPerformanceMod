@@ -236,7 +236,7 @@ public class ModSettings
 		// Populate with custom settings
 		List<Localization.Items> buttons = [
 			Localization.Items.SET_PRESET,
-			Localization.Items.SET_GI_ENTRY, // Very heavy
+			// Localization.Items.SET_GI_ENTRY, // Very heavy
 			Localization.Items.SET_SSR_ENTRY, // Light
 			Localization.Items.SET_SHADOWQUALITY_ENTRY, // Medium
 			Localization.Items.SET_VOLUMETRICS, // Medium
@@ -423,7 +423,7 @@ public class ModSettings
 		config = Plugin.config;
 
 		confPreset = config.Bind("Graphics", "GraphicsPreset", PerformancePresets.Vanilla, "Preconfigured set of options.");
-		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", ToggleEnum.on, "Toggles Global Illumination, volumetric lighting within the main world. Cost: Very expensive.");
+		confGlobalIllumination = config.Bind("Graphics", "GlobalIllumination", ToggleEnum.on, "[OBSOLETE] Toggles Global Illumination, volumetric lighting within the main world. Cost: Very expensive.");
 		confReflections = config.Bind("Graphics", "Reflections", StrengthEnum.def, "Toggles SSR and reflection probes surfaces. Cost: Light.");
 		confShadowQuality = config.Bind("Graphics", "ShadowQuality", StrengthEnum.def, "Adjusts quality of all shadows. Cost: Medium.");
 		confVolumetrics = config.Bind("Graphics", "Volumetrics", DioramaOnlyEnum.on, "Toggles Volumetric effects. Mostly found in Diorama. Warning: This will disable some Diorama effects. Cost: Medium.");
@@ -470,7 +470,7 @@ public class ModSettings
 			switch (currentPreset)
 			{
 				case PerformancePresets.Overdrive:
-					confGlobalIllumination.Value = ToggleEnum.off;
+					// confGlobalIllumination.Value = ToggleEnum.off;
 					confReflections.Value = StrengthEnum.aggresive;
 					confShadowQuality.Value = StrengthEnum.aggresive;
 					confVolumetrics.Value = DioramaOnlyEnum.off;
@@ -483,7 +483,7 @@ public class ModSettings
 					confMachineParticles.Value = QuantityEnum.none;
 					break;
 				case PerformancePresets.Optimized:
-					confGlobalIllumination.Value = ToggleEnum.off;
+					// confGlobalIllumination.Value = ToggleEnum.off;
 					confReflections.Value = StrengthEnum.optimized;
 					confShadowQuality.Value = StrengthEnum.optimized;
 					confVolumetrics.Value = DioramaOnlyEnum.dioramaOnly;
@@ -497,7 +497,7 @@ public class ModSettings
 					break;
 				case PerformancePresets.Vanilla:
 				default:
-					confGlobalIllumination.Value = ToggleEnum.on;
+					// confGlobalIllumination.Value = ToggleEnum.on;
 					confReflections.Value = StrengthEnum.def;
 					confShadowQuality.Value = StrengthEnum.def;
 					confVolumetrics.Value = DioramaOnlyEnum.on;
@@ -520,7 +520,7 @@ public class ModSettings
 	{
 		SetPreset(confPreset.Value);
 
-		ModPerformance.SetGlobalIllumination(confGlobalIllumination.Value);
+		ModPerformance.SetGlobalIllumination(Config.UseGI);
 		ModPerformance.SetReflections(confReflections.Value);
 		ModPerformance.SetShadowQuality(confShadowQuality.Value);
 		ModPerformance.SetChromaAberration(confChromaAberration.Value);
@@ -575,20 +575,6 @@ public class ModSettings
 	public static void ResetMainConditionals()
 	{
 		delayedInit = false;
-		bool disableVolumetrics = confVolumetrics.Value == DioramaOnlyEnum.off;
-
-		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
-			confReflections.Value != StrengthEnum.def, // SSR
-			confAmbientOcclusion.Value == ToggleEnum.off, // Ambient Occlusion
-			disableVolumetrics, // Volumetrics // Disabled if not on
-			true, // Vol Clouds
-			true, // Subsurface Scattering
-			true, // Decals (already disabled by default)
-			confMachineParticles.Value != QuantityEnum.full, // Distortion
-			confReflections.Value != StrengthEnum.def, // SSR Transparency
-			confReflections.Value != StrengthEnum.def, // Screen Space Lens Flare
-			confReflections.Value != StrengthEnum.def  // Data Driven Lens Flare
-		);
 	}
 
 	[HarmonyPostfix]
