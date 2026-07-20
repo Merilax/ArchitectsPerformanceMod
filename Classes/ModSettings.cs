@@ -92,9 +92,9 @@ public class ModSettings
 	public static ConfigEntry<ToggleEnum> confDockLights;
 	public static ConfigEntry<AntialiasingEnum> confAntialiasing;
 	public static ConfigEntry<QuantityEnum> confMachineParticles;
+	public static ConfigEntry<ToggleEnum> confCameraClipPlane;
 
 	private static CycleConfigEntry<PerformancePresets> _confPreset;
-	private static CycleConfigEntry<ToggleEnum> _confGlobalIllumination;
 	private static CycleConfigEntry<StrengthEnum> _confReflections;
 	private static CycleConfigEntry<StrengthEnum> _confShadowQuality;
 	private static CycleConfigEntry<DioramaOnlyEnum> _confVolumetrics;
@@ -105,6 +105,7 @@ public class ModSettings
 	private static CycleConfigEntry<ToggleEnum> _confDockLights;
 	private static CycleConfigEntry<AntialiasingEnum> _confAntialiasing;
 	private static CycleConfigEntry<QuantityEnum> _confMachineParticles;
+	private static CycleConfigEntry<ToggleEnum> _confCameraClipPlane;
 
 	// Objects
 	private static Scene rootScene;
@@ -154,13 +155,13 @@ public class ModSettings
 
 			// Set up UI navigation. Very roundabout because Unity is garbage.
 			Button keyAssignButton = settingsOriginal.transform.Find("Button_Keyassign").GetComponent<Button>();
-			Utils.SetUINavigation(keyAssignButton, NavDirEnum.DONW, modConfBtn);
+			Utils.SetUINavigation(keyAssignButton, NavDirEnum.DOWN, modConfBtn);
 
 			Button exitButton = settingsOriginal.transform.Find("Button_Exit").GetComponent<Button>();
 			Utils.SetUINavigation(exitButton, NavDirEnum.UP, modConfBtn);
 
 			Utils.SetUINavigation(modConfBtn, NavDirEnum.UP, keyAssignButton);
-			Utils.SetUINavigation(modConfBtn, NavDirEnum.DONW, exitButton);
+			Utils.SetUINavigation(modConfBtn, NavDirEnum.DOWN, exitButton);
 			Utils.SetUINavigation(modConfBtn, NavDirEnum.RIGHT, applyConfBtn);
 
 			Utils.SetUINavigation(applyConfBtn, NavDirEnum.LEFT, modConfBtn);
@@ -247,6 +248,7 @@ public class ModSettings
 			Localization.Items.SET_SHADOWTONES_ENTRY, // Free
 			Localization.Items.SET_AA_ENTRY, // Light
 			Localization.Items.SET_MACHINEPARTICLES_ENTRY, // Light
+			// Localization.Items.SET_CAMERACLIP,
 		];
 		for (int i = 0; i < content.transform.childCount; i++)
 		{
@@ -277,7 +279,7 @@ public class ModSettings
 				Utils.SetUINavigation(btnLeft, NavDirEnum.UP, applyConfBtn);
 				Utils.SetUINavigation(btnRight, NavDirEnum.UP, applyConfBtn);
 
-				Utils.SetUINavigation(applyConfBtn, NavDirEnum.DONW, btnLeft);
+				Utils.SetUINavigation(applyConfBtn, NavDirEnum.DOWN, btnLeft);
 			}
 			else
 			{
@@ -287,13 +289,13 @@ public class ModSettings
 
 			if (i == newRows.Count - 1)
 			{
-				Utils.SetUINavigation(btnLeft, NavDirEnum.DONW, null);
-				Utils.SetUINavigation(btnRight, NavDirEnum.DONW, null);
+				Utils.SetUINavigation(btnLeft, NavDirEnum.DOWN, null);
+				Utils.SetUINavigation(btnRight, NavDirEnum.DOWN, null);
 			}
 			else
 			{
-				Utils.SetUINavigation(btnLeft, NavDirEnum.DONW, newRows[i + 1].transform.GetChild(1).GetComponent<Button>());
-				Utils.SetUINavigation(btnRight, NavDirEnum.DONW, newRows[i + 1].transform.GetChild(2).GetComponent<Button>());
+				Utils.SetUINavigation(btnLeft, NavDirEnum.DOWN, newRows[i + 1].transform.GetChild(1).GetComponent<Button>());
+				Utils.SetUINavigation(btnRight, NavDirEnum.DOWN, newRows[i + 1].transform.GetChild(2).GetComponent<Button>());
 			}
 
 			Utils.SetUINavigation(btnLeft, NavDirEnum.LEFT, modConfBtn);
@@ -330,9 +332,6 @@ public class ModSettings
 			case Localization.Items.SET_PRESET:
 				entry = _confPreset = new CycleConfigEntry<PerformancePresets>(confPreset, presetEnums, valueText);
 				break;
-			case Localization.Items.SET_GI_ENTRY:
-				entry = _confGlobalIllumination = new CycleConfigEntry<ToggleEnum>(confGlobalIllumination, toggleEnums, valueText);
-				break;
 			case Localization.Items.SET_SSR_ENTRY:
 				entry = _confReflections = new CycleConfigEntry<StrengthEnum>(confReflections, strengthEnums, valueText);
 				break;
@@ -362,6 +361,9 @@ public class ModSettings
 				break;
 			case Localization.Items.SET_VOLUMETRICS:
 				entry = _confVolumetrics = new CycleConfigEntry<DioramaOnlyEnum>(confVolumetrics, dioramaOnlyEnums, valueText);
+				break;
+			case Localization.Items.SET_CAMERACLIP:
+				entry = _confCameraClipPlane = new CycleConfigEntry<ToggleEnum>(confCameraClipPlane, toggleEnums, valueText);
 				break;
 		}
 
@@ -395,9 +397,9 @@ public class ModSettings
 	{
 		if (!settingsView) return;
 		_confPreset.Cancel();
-		_confGlobalIllumination.Cancel();
 		_confReflections.Cancel();
 		_confShadowQuality.Cancel();
+		_confVolumetrics.Cancel();
 		_confAmbientOcclusion.Cancel();
 		_confChromaAberration.Cancel();
 		_confVignette.Cancel();
@@ -405,6 +407,7 @@ public class ModSettings
 		_confDockLights.Cancel();
 		_confAntialiasing.Cancel();
 		_confMachineParticles.Cancel();
+		// _confCameraClipPlane.Cancel();
 	}
 
 	public static void OnHideModSettings()
@@ -434,6 +437,7 @@ public class ModSettings
 		confDockLights = config.Bind("Graphics", "DockLights", ToggleEnum.on, "Sets the quality of lights in the player dock. Useful if GI and SSR are off, which makes some shadows look weird. Cost: Light.");
 		confAntialiasing = config.Bind("Graphics", "AntiAliasing", AntialiasingEnum.MSAA, "Sets the AntiAliasing type to use, if any. Cost: Very light.");
 		confMachineParticles = config.Bind("Graphics", "MachineParticles", QuantityEnum.full, "Sets the amount of particles and other machine-related effects. Cost: Light.");
+		confCameraClipPlane = config.Bind("Graphics", "CameraClipPlane", ToggleEnum.off, "Extends the render distance of the main camera. Cost: Variable.");
 
 		currentPreset = confPreset.Value;
 		ApplyChanges();
@@ -445,7 +449,6 @@ public class ModSettings
 	public static void OnSettingsApply()
 	{
 		_confPreset.Confirm();
-		_confGlobalIllumination.Confirm();
 		_confReflections.Confirm();
 		_confShadowQuality.Confirm();
 		_confVolumetrics.Confirm();
@@ -456,6 +459,7 @@ public class ModSettings
 		_confDockLights.Confirm();
 		_confAntialiasing.Confirm();
 		_confMachineParticles.Confirm();
+		// _confCameraClipPlane.Confirm();
 
 		config.Save();
 
@@ -481,6 +485,7 @@ public class ModSettings
 					confDockLights.Value = ToggleEnum.off;
 					confAntialiasing.Value = AntialiasingEnum.off;
 					confMachineParticles.Value = QuantityEnum.none;
+					// confCameraClipPlane.Value = ToggleEnum.off;
 					break;
 				case PerformancePresets.Optimized:
 					// confGlobalIllumination.Value = ToggleEnum.off;
@@ -494,6 +499,7 @@ public class ModSettings
 					confDockLights.Value = ToggleEnum.off;
 					confAntialiasing.Value = AntialiasingEnum.MSAA;
 					confMachineParticles.Value = QuantityEnum.reduced;
+					// confCameraClipPlane.Value = ToggleEnum.off;
 					break;
 				case PerformancePresets.Vanilla:
 				default:
@@ -508,6 +514,7 @@ public class ModSettings
 					confDockLights.Value = ToggleEnum.on;
 					confAntialiasing.Value = AntialiasingEnum.MSAA;
 					confMachineParticles.Value = QuantityEnum.full;
+					// confCameraClipPlane.Value = ToggleEnum.off;
 					break;
 			}
 		}
@@ -527,6 +534,7 @@ public class ModSettings
 		ModPerformance.SetVignette(confVignette.Value);
 		ModPerformance.SetShadowTones(confShadowTones.Value);
 		ModPerformance.SetAntialiasing(confAntialiasing.Value);
+		ModPerformance.SetExtendCameraRenderDistance(confCameraClipPlane.Value);
 		if (delayedInit)
 		{
 			ModPerformance.SetDockLights(confDockLights.Value);
@@ -544,12 +552,10 @@ public class ModSettings
 		GraphicsSettings.useScriptableRenderPipelineBatching = true;
 		QualitySettings.lodBias = 0.75f;
 
-		bool disableVolumetrics = confVolumetrics.Value != DioramaOnlyEnum.on;
-
 		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
 			confReflections.Value != StrengthEnum.def, // SSR
 			confAmbientOcclusion.Value == ToggleEnum.off, // Ambient Occlusion
-			disableVolumetrics, // Volumetrics // Disabled if not on
+			confVolumetrics.Value != DioramaOnlyEnum.on, // Volumetrics // Disabled if not on
 			true, // Vol Clouds
 			true, // Subsurface Scattering
 			true, // Decals (already disabled by default)

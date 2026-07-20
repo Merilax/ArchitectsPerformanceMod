@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>ArchitectsPerformanceMod</AssemblyName>
     <Product>Architect's Performance Mod</Product>
-    <Version>1.3.5</Version>
+    <Version>1.3.7</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -74,8 +74,8 @@
     <Reference Include="FusionRuntime">
       <HintPath>..\lib\PUBLIC\Fusion.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="Crest">
-      <HintPath>..\lib\PUBLIC\Crest.dll</HintPath>
+    <Reference Include="UniverseLib">
+      <HintPath>..\lib\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

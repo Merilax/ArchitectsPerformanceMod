@@ -208,20 +208,21 @@ public static class UIUtils
 		Plugin.LogDebug("CreateSlider Out");
 		return sliderObj;
 	}
-	public static GameObject CreateLabel(string text, Transform parent, TMP_FontAsset font, Material fontMat, int fontSize = -1)
+	public static GameObject CreateLabel(Localization.Items text, Transform parent, TMP_FontAsset font, Material fontMat, int fontSize = -1)
 	{
 		GameObject label = new("Label: " + text);
 		label.transform.SetParent(parent.transform);
 		TextMeshProUGUI textMesh = label.AddComponent<TextMeshProUGUI>();
 		textMesh.font = font;
 		textMesh.material = fontMat;
-		textMesh.text = text;
+		textMesh.text = Localization.GetText(text);
+		Localization.OnLocaleChanged += () => textMesh.text = Localization.GetText(text);
 		if (fontSize != -1) textMesh.fontSize = fontSize;
 
 		Plugin.LogDebug("CreateLabel Out");
 		return label;
 	}
-	public static GameObject CreateButton(string text, Transform parent, TMP_FontAsset font, Material fontMat, Action callable, int fontSize = -1)
+	public static GameObject CreateButton(Localization.Items text, Transform parent, TMP_FontAsset font, Material fontMat, Action callable, int fontSize = -1, int preferredHeight = 34)
 	{
 		Plugin.LogDebug("CreateButton In");
 		GameObject buttonObj = new("Button: " + text);
@@ -235,7 +236,7 @@ public static class UIUtils
 		btnRect.anchorMax = new Vector2(1, .5f);
 		// btnRect.anchoredPosition = Vector2.zero;
 		LayoutElement layout = buttonObj.AddComponent<LayoutElement>();
-		layout.preferredHeight = 34;
+		layout.preferredHeight = preferredHeight;
 		layout.flexibleWidth = 1;
 		Image image = buttonObj.AddComponent<Image>();
 		image.color = new Color(.9f, .9f, .9f, 1);
@@ -251,7 +252,8 @@ public static class UIUtils
 		// buttonText.autoSizeTextContainer = true;
 		buttonText.font = font;
 		buttonText.material = fontMat;
-		buttonText.text = text;
+		buttonText.text = Localization.GetText(text);
+		Localization.OnLocaleChanged += () => buttonText.text = Localization.GetText(text);
 		buttonText.color = new Color(.1f, .1f, .1f);
 		buttonText.alignment = TextAlignmentOptions.Center;
 		if (fontSize != -1) buttonText.fontSize = fontSize;
@@ -273,7 +275,7 @@ public static class UIUtils
 		Plugin.LogDebug("CreateButton Out");
 		return buttonObj;
 	}
-	public static GameObject CreateDropdown(List<string> items, Transform parent, Action<int> callable, int fontSize = -1)
+	public static GameObject CreateDropdown(List<Localization.Items> items, Transform parent, Action<int> callable, int fontSize = -1)
 	{
 		if (fontSize == -1) fontSize = 20;
 
@@ -293,8 +295,11 @@ public static class UIUtils
 		if (callable != null)
 			dropdown.onValueChanged.AddListener(callable);
 		dropdown.options = new();
-		foreach (string elem in items)
-			dropdown.options.Add(new Dropdown.OptionData(elem));
+		for (int i = 0; i < items.Count; i++)
+		{
+			dropdown.options.Add(new Dropdown.OptionData(Localization.GetText(items[i])));
+			Localization.OnLocaleChanged += () => dropdown.options[i].text = Localization.GetText(items[i]);
+		}
 
 		dropdown.transition = Selectable.Transition.ColorTint;
 		ColorBlock colorBlock = new()
@@ -438,7 +443,7 @@ public static class UIUtils
 			InputField field = input.AddComponent<InputField>();
 			field.contentType = contentType;
 			field.lineType = InputField.LineType.SingleLine;
-			field.characterLimit = 6;
+			field.characterLimit = charLimit;
 
 			GameObject textObj = new("Text");
 			textObj.transform.SetParent(input.transform);

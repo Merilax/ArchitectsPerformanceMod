@@ -14,6 +14,7 @@ namespace ArchPerformanceMod;
 
 public class UICommons
 {
+	public const int FONT_SIZE_LARGE = 28;
 	public const int FONT_SIZE_NORMAL = 20;
 	public const int FONT_SIZE_SUB = 16;
 }
@@ -242,8 +243,8 @@ public class EnvironmentUI
 		layout.spacing = 30;
 		layout.padding = new RectOffset(20, 20, 100, 100);
 
-		GameObject environmentButton = UIUtils.CreateButton("Environment", mainMenu.transform, font, fontMat, GotoEnvironment, UICommons.FONT_SIZE_NORMAL);
-		GameObject lightsButton = UIUtils.CreateButton("Lighting", mainMenu.transform, font, fontMat, GotoLighting, UICommons.FONT_SIZE_NORMAL);
+		GameObject environmentButton = UIUtils.CreateButton(Localization.Items.ENVIRONMENT, mainMenu.transform, font, fontMat, GotoEnvironment, UICommons.FONT_SIZE_NORMAL);
+		GameObject lightsButton = UIUtils.CreateButton(Localization.Items.LIGHTING, mainMenu.transform, font, fontMat, GotoLighting, UICommons.FONT_SIZE_NORMAL);
 
 		environmentMenu = CreateEnviromentUIBlock(nav.transform);
 		environmentMenu.active = false;
@@ -260,51 +261,51 @@ public class EnvironmentUI
 		scrollView.transform.GetChild(0).GetComponent<VerticalLayoutGroup>().padding = new(20, 20, 80, 80);
 		Transform scrollContent = scrollView.transform.GetChild(0);
 
-		UIUtils.CreateButton("Return to settings", scrollContent.transform, font, fontMat, GotoMain, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton(Localization.Items.RETURN_TO_SETTINGS, scrollContent.transform, font, fontMat, GotoMain, UICommons.FONT_SIZE_NORMAL);
 
 		if (isDiorama)
 		{
-			UIUtils.CreateLabel("Fog Color", scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateLabel(Localization.Items.FOG_COLOR, scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
 			if (ModSettings.confVolumetrics.Value != ModSettings.DioramaOnlyEnum.off)
 			{
-				UIUtils.CreateLabel("Hue", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+				UIUtils.CreateLabel(Localization.Items.HUE, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 				fogHue = UIUtils.CreateSlider(0.01f, 360, scrollContent, OnFogColorChanged).GetComponent<Slider>();
-				UIUtils.CreateLabel("Saturation", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+				UIUtils.CreateLabel(Localization.Items.SATURATION, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 				fogSat = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnFogColorChanged).GetComponent<Slider>();
-				UIUtils.CreateLabel("Value", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+				UIUtils.CreateLabel(Localization.Items.VALUE, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 				fogLum = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnFogColorChanged).GetComponent<Slider>();
-				UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetFogAlbedo(Color.white, true), UICommons.FONT_SIZE_NORMAL);
+				UIUtils.CreateButton(Localization.Items.RESET, scrollContent, font, fontMat, () => SetFogAlbedo(Color.white, true), UICommons.FONT_SIZE_NORMAL);
 			}
 			else
-				UIUtils.CreateLabel("Volumetrics are disabled", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+				UIUtils.CreateLabel(Localization.Items.VOLUMETRICS_DISABLED, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 
-			UIUtils.CreateLabel("Background Color", scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-			UIUtils.CreateLabel("Hue", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+			UIUtils.CreateLabel(Localization.Items.BACKGROUND_COLOR, scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateLabel(Localization.Items.HUE, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 			backHue = UIUtils.CreateSlider(0.01f, 360, scrollContent, OnBackColorChanged).GetComponent<Slider>();
-			UIUtils.CreateLabel("Saturation", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+			UIUtils.CreateLabel(Localization.Items.SATURATION, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 			backSat = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnBackColorChanged).GetComponent<Slider>();
-			UIUtils.CreateLabel("Value", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+			UIUtils.CreateLabel(Localization.Items.VALUE, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 			backLum = UIUtils.CreateSlider(0.01f, 100, scrollContent, OnBackColorChanged).GetComponent<Slider>();
-			UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetBackColor(Color.white, true), UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.RESET, scrollContent, font, fontMat, () => SetBackColor(Color.white, true), UICommons.FONT_SIZE_NORMAL);
 		}
 
-		UIUtils.CreateLabel("Ground Color", scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-		UIUtils.CreateLabel("Hue", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.GROUND_COLOR, scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel(Localization.Items.HUE, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 		gndHue = UIUtils.CreateSlider(0, 360, scrollContent, OnGndColorChanged).GetComponent<Slider>();
-		UIUtils.CreateLabel("Saturation", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.SATURATION, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 		gndSat = UIUtils.CreateSlider(0, 100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
-		UIUtils.CreateLabel("Value", scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.VALUE, scrollContent, font, fontMat, UICommons.FONT_SIZE_SUB);
 		gndLum = UIUtils.CreateSlider(0, 100, scrollContent, OnGndColorChanged).GetComponent<Slider>();
-		UIUtils.CreateButton("Reset", scrollContent, font, fontMat, () => SetGroundColor(Color.white, true), UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton(Localization.Items.RESET, scrollContent, font, fontMat, () => SetGroundColor(Color.white, true), UICommons.FONT_SIZE_NORMAL);
 
-		UIUtils.CreateLabel("Toggles:", scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-		UIUtils.CreateButton("Fog", scrollContent, font, fontMat, ToggleFog, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel(Localization.Items.TOGGLES, scrollContent, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton(Localization.Items.TOGGLE_FOG, scrollContent, font, fontMat, ToggleFog, UICommons.FONT_SIZE_NORMAL);
 		if (isDiorama)
 		{
-			UIUtils.CreateButton("Ground", scrollContent, font, fontMat, ToggleGround, UICommons.FONT_SIZE_NORMAL);
-			UIUtils.CreateButton("Terrain", scrollContent, font, fontMat, ToggleTerrain, UICommons.FONT_SIZE_NORMAL);
-			UIUtils.CreateButton("Frame", scrollContent, font, fontMat, ToggleFrame, UICommons.FONT_SIZE_NORMAL);
-			UIUtils.CreateButton("Captions", scrollContent, font, fontMat, ToggleCaptions, UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.TOGGLE_GROUND, scrollContent, font, fontMat, ToggleGround, UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.TOGGLE_TERRAIN, scrollContent, font, fontMat, ToggleTerrain, UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.TOGGLE_FRAME, scrollContent, font, fontMat, ToggleFrame, UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.TOGGLE_CAPTIONS, scrollContent, font, fontMat, ToggleCaptions, UICommons.FONT_SIZE_NORMAL);
 		}
 
 		if (isDiorama)
@@ -347,9 +348,9 @@ public class EnvironmentUI
 		group.padding = new(10, 10, 20, 20);
 		group.childForceExpandHeight = false;
 
-		UIUtils.CreateButton("Return to settings", lightingBlock.transform, font, fontMat, GotoMain, UICommons.FONT_SIZE_NORMAL);
-		UIUtils.CreateLabel("Lights:", lightingBlock.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-		UIUtils.CreateButton("Add light", lightingBlock.transform, font, fontMat, () =>
+		UIUtils.CreateButton(Localization.Items.RETURN_TO_SETTINGS, lightingBlock.transform, font, fontMat, GotoMain, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel(Localization.Items.LIGHTS, lightingBlock.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton(Localization.Items.ADD_LIGHT, lightingBlock.transform, font, fontMat, () =>
 		{
 			GameObject light = LightSystem.SpawnLight(lightContainer.transform);
 			LightControl lightControl = lightSystem.CreateLightControl(light.GetComponent<Light>());
@@ -395,26 +396,26 @@ public class EnvironmentUI
 		// Create controls
 		// Active
 		Plugin.LogDebug(light);
-		UIUtils.CreateButton("Toggle", container.transform, font, fontMat, () => light.SetActive(!light.Active), UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton(Localization.Items.TOGGLE, container.transform, font, fontMat, () => light.SetActive(!light.Active), UICommons.FONT_SIZE_NORMAL);
 
 		// Color
-		UIUtils.CreateLabel("Color:", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-		UIUtils.CreateLabel("Hue", container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.COLOR, container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateLabel(Localization.Items.HUE, container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
 		Slider lightHue = UIUtils.CreateSlider(0.01f, 360, container.transform, null).GetComponent<Slider>();
-		UIUtils.CreateLabel("Saturation", container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.SATURATION, container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
 		Slider lightSat = UIUtils.CreateSlider(0.01f, 100, container.transform, null).GetComponent<Slider>();
-		UIUtils.CreateLabel("Value", container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.VALUE, container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
 		Slider lightVal = UIUtils.CreateSlider(0.01f, 100, container.transform, null).GetComponent<Slider>();
 		if (isVanilla)
-			UIUtils.CreateButton("Reset color", container.transform, font, fontMat, () => SetLightColor(light, Color.white, lightHue, lightSat, lightVal, true), UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.RESET, container.transform, font, fontMat, () => SetLightColor(light, Color.white, lightHue, lightSat, lightVal, true), UICommons.FONT_SIZE_NORMAL);
 
 		// Position
-		GameObject positionLabel = UIUtils.CreateLabel("Position", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		GameObject positionLabel = UIUtils.CreateLabel(Localization.Items.POSITION, container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
 		List<InputField> posArr = UIUtils.CreateVec3Input(container.transform, InputField.ContentType.DecimalNumber, 6);
 		GameObject positionGroup = posArr[0].transform.parent.gameObject;
 
 		// Rotation
-		GameObject rotationLabel = UIUtils.CreateLabel("Rotation", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		GameObject rotationLabel = UIUtils.CreateLabel(Localization.Items.ROTATION, container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
 		GameObject rotationGroup = new("Rotation Group");
 		rotationGroup.transform.SetParent(container.transform);
 		RectTransform rect = rotationGroup.AddComponent<RectTransform>();
@@ -429,26 +430,26 @@ public class EnvironmentUI
 		Slider rotPitch = UIUtils.CreateSlider(-180, 180, rotationGroup.transform, null).GetComponent<Slider>();
 
 		// Light type
-		UIUtils.CreateLabel("Light type", container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
-		Dropdown dropdown = UIUtils.CreateDropdown(["Spot", "Point", "Directional"], container.transform, null, UICommons.FONT_SIZE_NORMAL).GetComponent<Dropdown>();
+		UIUtils.CreateLabel(Localization.Items.LIGHT_TYPE, container.transform, font, fontMat, UICommons.FONT_SIZE_NORMAL);
+		Dropdown dropdown = UIUtils.CreateDropdown([Localization.Items.SPOT, Localization.Items.POINT, Localization.Items.DIRECTIONAL], container.transform, null, UICommons.FONT_SIZE_NORMAL).GetComponent<Dropdown>();
 
 		// Amplitude (spotAngle), range and intensity
-		GameObject amplitudeLabel = UIUtils.CreateLabel("Amplitude", container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
+		GameObject amplitudeLabel = UIUtils.CreateLabel(Localization.Items.AMPLITUDE, container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
 		Slider amplitude = UIUtils.CreateSlider(0, 180, container.transform, (value) => light.SetAmplitude(value)).GetComponent<Slider>();
-		GameObject rangeLabel = UIUtils.CreateLabel("Range", container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
+		GameObject rangeLabel = UIUtils.CreateLabel(Localization.Items.RANGE, container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
 		Slider range = UIUtils.CreateSlider(0, 100, container.transform, (value) => light.SetRange(value)).GetComponent<Slider>();
-		UIUtils.CreateLabel("Intensity", container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
+		UIUtils.CreateLabel(Localization.Items.INTENSITY, container.transform, font, fontMat, UICommons.FONT_SIZE_SUB);
 		Slider intensity = UIUtils.CreateSlider(0, 100_000_000, container.transform, (value) => light.SetIntensity(value)).GetComponent<Slider>();
 
 		// Shadows and volumetrics
-		UIUtils.CreateButton("Toggle shadows", container.transform, font, fontMat, () => light.SetShadows(light.Shadows == LightShadows.None ? LightShadows.Hard : LightShadows.None), UICommons.FONT_SIZE_NORMAL);
+		UIUtils.CreateButton(Localization.Items.TOGGLE_SHADOWS, container.transform, font, fontMat, () => light.SetShadows(light.Shadows == LightShadows.None ? LightShadows.Hard : LightShadows.None), UICommons.FONT_SIZE_NORMAL);
 		if (ModSettings.confVolumetrics.Value != ModSettings.DioramaOnlyEnum.off)
-			UIUtils.CreateButton("Toggle volumetrics", container.transform, font, fontMat, () => light.SetVolumetrics(!light.Volumetrics), UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.TOGGLE_VOLUMETRICS, container.transform, font, fontMat, () => light.SetVolumetrics(!light.Volumetrics), UICommons.FONT_SIZE_NORMAL);
 
 		if (isVanilla)
-			UIUtils.CreateButton("Reset parameters", container.transform, font, fontMat, () => ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotYaw, rotPitch), UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.RESET_PARAMS, container.transform, font, fontMat, () => ResetLightParams(light, dropdown, amplitude, range, intensity, posArr, rotYaw, rotPitch), UICommons.FONT_SIZE_NORMAL);
 		if (!isVanilla)
-			UIUtils.CreateButton("Delete", container.transform, font, fontMat, () => lightSystem?.DestroyLight(light), UICommons.FONT_SIZE_NORMAL);
+			UIUtils.CreateButton(Localization.Items.DELETE, container.transform, font, fontMat, () => lightSystem?.DestroyLight(light), UICommons.FONT_SIZE_NORMAL);
 
 		// UI events
 		lightHue.onValueChanged.AddListener((Action<float>)((_) => OnLightColorChanged(light, lightHue, lightSat, lightVal)));

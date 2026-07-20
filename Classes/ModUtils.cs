@@ -37,7 +37,7 @@ public class Utils
         {
             case NavDirEnum.UP: nav.selectOnUp = target; break;
             case NavDirEnum.RIGHT: nav.selectOnRight = target; break;
-            case NavDirEnum.DONW: nav.selectOnDown = target; break;
+            case NavDirEnum.DOWN: nav.selectOnDown = target; break;
             case NavDirEnum.LEFT: nav.selectOnLeft = target; break;
         }
         input.navigation = nav;
@@ -88,4 +88,4 @@ public class ColorConverter : JsonConverter<Color>
     }
 }
 
-public enum NavDirEnum { UP, RIGHT, DONW, LEFT }
+public enum NavDirEnum { UP, RIGHT, DOWN, LEFT }

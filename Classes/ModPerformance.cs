@@ -42,13 +42,12 @@ public class ModPerformance
 		SetAntialiasing(ModSettings.confAntialiasing.Value);
 		SetShadowQuality(ModSettings.confShadowQuality.Value);
 		// SetMachineParticles(ModSettings.confMachineParticles.Value);
-
-		bool disableVolumetrics = ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off;
+		// SetExtendCameraRenderDistance(ModSettings.confCameraClipPlane.Value);
 
 		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
 			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR
 			ModSettings.confAmbientOcclusion.Value == ModSettings.ToggleEnum.off, // Ambient Occlusion
-			disableVolumetrics, // Volumetrics // Disabled if not on
+			ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off, // Volumetrics // Disabled if not on
 			true, // Vol Clouds
 			true, // Subsurface Scattering
 			true, // Decals (already disabled by default)
@@ -183,6 +182,27 @@ public class ModPerformance
 		SetSpecificMachineParticles(playerVFX, toSet, true);
 
 		ApplyParticlesInRace();
+	}
+
+	public static void SetExtendCameraRenderDistance(ModSettings.ToggleEnum toSet)
+	{
+		Camera camera = null;
+		// HDAdditionalCameraData cameraData = null;
+		Scene diorama = SceneManager.GetSceneByName("Georama");
+		if (diorama.IsValid())
+		{
+			var cameraObj = diorama.GetRootGameObjects().First(item => item.name == "Camera");
+			camera = cameraObj.GetComponent<Camera>();
+			// cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
+		}
+		else
+		{
+			var cameraObj = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "Main Camera");
+			camera = cameraObj.GetComponent<Camera>();
+			// cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
+		}
+
+		camera.farClipPlane = toSet == ModSettings.ToggleEnum.off ? 2000 : 20000; 
 	}
 
 	[HarmonyPostfix]
