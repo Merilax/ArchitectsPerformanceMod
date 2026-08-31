@@ -6,3 +6,4 @@ obj
 *.lscache
 Classes/Test.cs
 private
+*.code-workspace

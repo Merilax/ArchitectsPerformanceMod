@@ -208,7 +208,7 @@ public static class UIUtils
 		Plugin.LogDebug("CreateSlider Out");
 		return sliderObj;
 	}
-	public static GameObject CreateLabel(Localization.Items text, Transform parent, TMP_FontAsset font, Material fontMat, int fontSize = -1)
+	public static GameObject CreateLabel(string text, Transform parent, TMP_FontAsset font, Material fontMat, int fontSize = -1)
 	{
 		GameObject label = new("Label: " + text);
 		label.transform.SetParent(parent.transform);
@@ -222,7 +222,7 @@ public static class UIUtils
 		Plugin.LogDebug("CreateLabel Out");
 		return label;
 	}
-	public static GameObject CreateButton(Localization.Items text, Transform parent, TMP_FontAsset font, Material fontMat, Action callable, int fontSize = -1, int preferredHeight = 34)
+	public static GameObject CreateButton(string text, Transform parent, TMP_FontAsset font, Material fontMat, Action callable, int fontSize = -1, int preferredHeight = 34)
 	{
 		Plugin.LogDebug("CreateButton In");
 		GameObject buttonObj = new("Button: " + text);
@@ -275,7 +275,7 @@ public static class UIUtils
 		Plugin.LogDebug("CreateButton Out");
 		return buttonObj;
 	}
-	public static GameObject CreateDropdown(List<Localization.Items> items, Transform parent, Action<int> callable, int fontSize = -1)
+	public static GameObject CreateDropdown(List<string> items, Transform parent, Action<int> callable, int fontSize = -1)
 	{
 		if (fontSize == -1) fontSize = 20;
 

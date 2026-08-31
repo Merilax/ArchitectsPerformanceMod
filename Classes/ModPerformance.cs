@@ -46,12 +46,12 @@ public class ModPerformance
 
 		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
 			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR
-			ModSettings.confAmbientOcclusion.Value == ModSettings.ToggleEnum.off, // Ambient Occlusion
+			ModSettings.confAmbientOcclusion.Value == ArchEmperorLib.ModSettingsManager.ToggleEnum.off, // Ambient Occlusion
 			ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off, // Volumetrics // Disabled if not on
 			true, // Vol Clouds
 			true, // Subsurface Scattering
 			true, // Decals (already disabled by default)
-			ModSettings.confMachineParticles.Value != ModSettings.QuantityEnum.full, // Distortion
+			ModSettings.confMachineParticles.Value != ArchEmperorLib.ModSettingsManager.QuantityEnum.full, // Distortion
 			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR Transparency
 			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // Screen Space Lens Flare
 			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def  // Data Driven Lens Flare
@@ -90,29 +90,29 @@ public class ModPerformance
 		if (SceneManager.GetActiveScene().name != "MainMenu") ApplyReflectionsInRace();
 	}
 
-	public static void SetChromaAberration(ModSettings.ToggleEnum toSet)
+	public static void SetChromaAberration(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
 		GetPostProcessVolume().profile.TryGet(out ChromaticAberration chroma);
-		chroma?.active = toSet == ModSettings.ToggleEnum.on;
+		chroma?.active = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.on;
 	}
 
-	public static void SetVignette(ModSettings.ToggleEnum toSet)
+	public static void SetVignette(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
 		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.TryGet(out Vignette vignette);
-		vignette?.active = toSet == ModSettings.ToggleEnum.on;
+		vignette?.active = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.on;
 	}
 
-	public static void SetShadowTones(ModSettings.ToggleEnum toSet)
+	public static void SetShadowTones(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
 		GetEnvironmentObj().transform.Find("Vol").Find("PostProcess").GetComponent<Volume>().profile.TryGet(out Tonemapping tonemapping);
-		tonemapping?.active = toSet == ModSettings.ToggleEnum.on;
+		tonemapping?.active = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.on;
 	}
 
-	public static void SetDockLights(ModSettings.ToggleEnum toSet)
+	public static void SetDockLights(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
 		if (SceneManager.GetActiveScene().name == "Georama") return;
 
-		bool input = toSet == ModSettings.ToggleEnum.on;
+		bool input = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.on;
 
 		GameObject dockRootObj = SceneManager.GetSceneByName("MainMenu").GetRootGameObjects().First(item => item.name == "World_PlayerDock");
 
@@ -172,7 +172,7 @@ public class ModPerformance
 		}
 	}
 
-	public static void SetMachineParticles(ModSettings.QuantityEnum toSet)
+	public static void SetMachineParticles(ArchEmperorLib.ModSettingsManager.QuantityEnum toSet)
 	{
 		if (SceneManager.GetActiveScene().name == "Georama") return;
 
@@ -184,7 +184,7 @@ public class ModPerformance
 		ApplyParticlesInRace();
 	}
 
-	public static void SetExtendCameraRenderDistance(ModSettings.ToggleEnum toSet)
+	public static void SetExtendCameraRenderDistance(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
 		Camera camera = null;
 		// HDAdditionalCameraData cameraData = null;
@@ -202,7 +202,7 @@ public class ModPerformance
 			// cameraData = cameraObj.GetComponent<HDAdditionalCameraData>();
 		}
 
-		camera.farClipPlane = toSet == ModSettings.ToggleEnum.off ? 2000 : 20000; 
+		camera.farClipPlane = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.off ? 2000 : 20000;
 	}
 
 	[HarmonyPostfix]
@@ -244,6 +244,19 @@ public class ModPerformance
 				}
 				break;
 
+			case "Moon_01":
+				Transform xform = rootObjs.First(item => item.name == "-----------Enviroments-----------------------").transform;
+				switch (ModSettings.confReflections.Value)
+				{
+					case ModSettings.StrengthEnum.def:
+					case ModSettings.StrengthEnum.optimized:
+						xform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = true;
+						break;
+					case ModSettings.StrengthEnum.aggresive:
+						xform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = false;
+						break;
+				}
+				break;
 			case "Canyon_01":
 			case "Canyon_02":
 			case "Cyber_01":
@@ -251,7 +264,6 @@ public class ModPerformance
 			case "Sea_01":
 			case "Sea_02":
 			case "Sky_01":
-			case "Moon_01":
 				switch (ModSettings.confReflections.Value)
 				{
 					case ModSettings.StrengthEnum.def:
@@ -300,12 +312,12 @@ public class ModPerformance
 		}
 	}
 
-	private static void SetSpecificMachineParticles(Transform playerVFX, ModSettings.QuantityEnum toSet, bool isMainPlayer = false)
+	private static void SetSpecificMachineParticles(Transform playerVFX, ArchEmperorLib.ModSettingsManager.QuantityEnum toSet, bool isMainPlayer = false)
 	{
 		if (isMainPlayer)
 		{
 			GameObject worldFragments = playerVFX.Find("WorldFragments").gameObject;
-			worldFragments.active = toSet == ModSettings.QuantityEnum.full;
+			worldFragments.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
 		}
 		GameObject warpVFX = playerVFX.Find("WarpVFX").gameObject;
 		GameObject sandEffects = playerVFX.Find("SandEffects").gameObject;
@@ -317,28 +329,28 @@ public class ModPerformance
 		GameObject floatParticles = playerVFX.Find("Float_Around_Particle").gameObject;
 		GameObject velocityParticles = playerVFX.Find("VelocityParticle").gameObject;
 
-		warpVFX.active = toSet == ModSettings.QuantityEnum.full;
-		sandEffects.active = toSet == ModSettings.QuantityEnum.full;
-		waterEffects.active = toSet == ModSettings.QuantityEnum.full;
-		waterInteraction.active = toSet == ModSettings.QuantityEnum.full;
-		steamEffects.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
-		structureEffects.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
+		warpVFX.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		sandEffects.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		waterEffects.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		waterInteraction.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		steamEffects.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full || toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.reduced;
+		structureEffects.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full || toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.reduced;
 
-		breakEffects.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
+		breakEffects.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full || toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.reduced;
 		for (int i = 0; i < breakEffects.transform.childCount; i++)
-			breakEffects.transform.GetChild(i).gameObject.active = toSet == ModSettings.QuantityEnum.full;
+			breakEffects.transform.GetChild(i).gameObject.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
 
-		floatParticles.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
-		floatParticles.transform.GetChild(0).gameObject.active = toSet == ModSettings.QuantityEnum.full;
-		floatParticles.transform.GetChild(2).gameObject.active = toSet == ModSettings.QuantityEnum.full;
+		floatParticles.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full || toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.reduced;
+		floatParticles.transform.GetChild(0).gameObject.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		floatParticles.transform.GetChild(2).gameObject.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
 
-		velocityParticles.active = toSet == ModSettings.QuantityEnum.full || toSet == ModSettings.QuantityEnum.reduced;
-		velocityParticles.transform.GetChild(0).gameObject.active = toSet == ModSettings.QuantityEnum.full;
-		velocityParticles.transform.GetChild(3).gameObject.active = toSet == ModSettings.QuantityEnum.full;
-		velocityParticles.transform.GetChild(4).gameObject.active = toSet == ModSettings.QuantityEnum.full;
+		velocityParticles.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full || toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.reduced;
+		velocityParticles.transform.GetChild(0).gameObject.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		velocityParticles.transform.GetChild(3).gameObject.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
+		velocityParticles.transform.GetChild(4).gameObject.active = toSet == ArchEmperorLib.ModSettingsManager.QuantityEnum.full;
 
 		GameObject mechBody = playerVFX.parent.Find("ArchitectureComplex").gameObject;
-		SetModuleParticles(mechBody.transform, toSet != ModSettings.QuantityEnum.none);
+		SetModuleParticles(mechBody.transform, toSet != ArchEmperorLib.ModSettingsManager.QuantityEnum.none);
 	}
 
 	private static void SetModuleParticles(Transform xform, bool toSet)

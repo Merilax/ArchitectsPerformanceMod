@@ -7,31 +7,54 @@ public class Localization
 {
 	enum Locales { ENGLISH, JAPANESE, CHINESE, CHINESE_SIMPLIFIED, UNKNOWN }
 
-	public enum Items
+	// public enum Items
+	// {
+	// 	OFF, ON,
+	// 	LOW, MEDIUM, HIGH,
+	// 	NONE, REDUCED, FULL,
+	// 	DEF, OPTIMIZED, AGGRESIVE,
+	// 	FXAA, MSAA, TAA,
+	// 	RACE_ONLY, DIORAMA_ONLY,
+	// 	MOD_BUTTON,
+	// 	SET_PRESET, SET_GI_ENTRY, SET_SSR_ENTRY, SET_SHADOWQUALITY_ENTRY, SET_AO_ENTRY, SET_CHROMAABERRATION_ENTRY, SET_VIGNETTE_ENTRY,
+	// 	SET_SHADOWTONES_ENTRY, SET_DOCKLIGHTS_ENTRY, SET_AA_ENTRY, SET_MACHINEPARTICLES_ENTRY, SET_VOLUMETRICS, SET_CAMERACLIP,
+	// 	PRESET_VANILLA, PRESET_OPTIMIZED, PRESET_OVERDRIVE, PRESET_CUSTOM,
+	// 	ENVIRONMENT, LIGHTING,
+	// 	VOLUMETRICS_DISABLED,
+	// 	RETURN, RETURN_TO_SETTINGS,
+	// 	COLOR, FOG_COLOR, BACKGROUND_COLOR, GROUND_COLOR,
+	// 	HUE, SATURATION, VALUE,
+	// 	RESET, RESET_PARAMS,
+	// 	TOGGLES, TOGGLE, TOGGLE_FOG, TOGGLE_GROUND, TOGGLE_TERRAIN, TOGGLE_FRAME, TOGGLE_CAPTIONS, TOGGLE_SHADOWS, TOGGLE_VOLUMETRICS,
+	// 	LIGHTS, ADD_LIGHT, DELETE,
+	// 	POSITION, ROTATION, LIGHT_TYPE, AMPLITUDE, RANGE, INTENSITY,
+	// 	POINT, SPOT, DIRECTIONAL,
+	// }
+	public static class Items
 	{
-		OFF, ON,
-		LOW, MEDIUM, HIGH,
-		NONE, REDUCED, FULL,
-		DEF, OPTIMIZED, AGGRESIVE,
-		FXAA, MSAA, TAA,
-		RACE_ONLY, DIORAMA_ONLY,
-		MOD_BUTTON,
-		SET_PRESET, SET_GI_ENTRY, SET_SSR_ENTRY, SET_SHADOWQUALITY_ENTRY, SET_AO_ENTRY, SET_CHROMAABERRATION_ENTRY, SET_VIGNETTE_ENTRY,
-		SET_SHADOWTONES_ENTRY, SET_DOCKLIGHTS_ENTRY, SET_AA_ENTRY, SET_MACHINEPARTICLES_ENTRY, SET_VOLUMETRICS, SET_CAMERACLIP,
-		PRESET_VANILLA, PRESET_OPTIMIZED, PRESET_OVERDRIVE, PRESET_CUSTOM,
-		ENVIRONMENT, LIGHTING,
-		VOLUMETRICS_DISABLED,
-		RETURN, RETURN_TO_SETTINGS,
-		COLOR, FOG_COLOR, BACKGROUND_COLOR, GROUND_COLOR, 
-		HUE, SATURATION, VALUE,
-		RESET, RESET_PARAMS,
-		TOGGLES, TOGGLE, TOGGLE_FOG, TOGGLE_GROUND, TOGGLE_TERRAIN, TOGGLE_FRAME, TOGGLE_CAPTIONS, TOGGLE_SHADOWS, TOGGLE_VOLUMETRICS,
-		LIGHTS, ADD_LIGHT, DELETE,
-		POSITION, ROTATION, LIGHT_TYPE, AMPLITUDE, RANGE, INTENSITY,
-		POINT, SPOT, DIRECTIONAL,
+		public const string OFF = "OFF", ON = "ON", LOW = "LOW", MEDIUM = "MEDIUM", HIGH = "HIGH",
+		NONE = "NONE", REDUCED = "REDUCED", FULL = "FULL",
+		DEF = "DEF", OPTIMIZED = "OPTIMIZED", AGGRESIVE = "AGGRESIVE",
+		FXAA = "FXAA", MSAA = "MSAA", TAA = "TAA",
+		RACE_ONLY = "RACE_ONLY", DIORAMA_ONLY = "DIORAMA_ONLY",
+		MOD_BUTTON = "MOD_BUTTON",
+		SET_PRESET = "SET_PRESET", SET_GI_ENTRY = "SET_GI_ENTRY", SET_SSR_ENTRY = "SET_SSR_ENTRY", SET_SHADOWQUALITY_ENTRY = "SET_SHADOWQUALITY_ENTRY", SET_AO_ENTRY = "SET_AO_ENTRY", SET_CHROMAABERRATION_ENTRY = "SET_CHROMAABERRATION_ENTRY", SET_VIGNETTE_ENTRY = "SET_VIGNETTE_ENTRY",
+		SET_SHADOWTONES_ENTRY = "SET_SHADOWTONES_ENTRY", SET_DOCKLIGHTS_ENTRY = "SET_DOCKLIGHTS_ENTRY", SET_AA_ENTRY = "SET_AA_ENTRY", SET_MACHINEPARTICLES_ENTRY = "SET_MACHINEPARTICLES_ENTRY", SET_VOLUMETRICS = "SET_VOLUMETRICS", SET_CAMERACLIP = "SET_CAMERACLIP",
+		PRESET_VANILLA = "PRESET_VANILLA", PRESET_OPTIMIZED = "PRESET_OPTIMIZED", PRESET_OVERDRIVE = "PRESET_OVERDRIVE", PRESET_CUSTOM = "PRESET_CUSTOM",
+		ENVIRONMENT = "ENVIRONMENT", LIGHTING = "LIGHTING",
+		VOLUMETRICS_DISABLED = "VOLUMETRICS_DISABLED",
+		RETURN = "RETURN", RETURN_TO_SETTINGS = "RETURN_TO_SETTINGS",
+		COLOR = "COLOR", FOG_COLOR = "FOG_COLOR", BACKGROUND_COLOR = "BACKGROUND_COLOR", GROUND_COLOR = "GROUND_COLOR",
+		HUE = "HUE", SATURATION = "SATURATION", VALUE = "VALUE",
+		RESET = "RESET", RESET_PARAMS = "RESET_PARAMS",
+		TOGGLES = "TOGGLES", TOGGLE = "TOGGLE", TOGGLE_FOG = "TOGGLE_FOG", TOGGLE_GROUND = "TOGGLE_GROUND", TOGGLE_TERRAIN = "TOGGLE_TERRAIN", TOGGLE_FRAME = "TOGGLE_FRAME", TOGGLE_CAPTIONS = "TOGGLE_CAPTIONS", TOGGLE_SHADOWS = "TOGGLE_SHADOWS", TOGGLE_VOLUMETRICS = "TOGGLE_VOLUMETRICS",
+		LIGHTS = "LIGHTS", ADD_LIGHT = "ADD_LIGHT", DELETE = "DELETE",
+		POSITION = "POSITION", ROTATION = "ROTATION", LIGHT_TYPE = "LIGHT_TYPE", AMPLITUDE = "AMPLITUDE", RANGE = "RANGE", INTENSITY = "INTENSITY",
+		POINT = "POINT", SPOT = "SPOT", DIRECTIONAL = "DIRECTIONAL";
 	}
 
-	private readonly static Dictionary<Items, string> englishDict = new()
+
+	private readonly static Dictionary<string, string> englishDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
@@ -69,7 +92,7 @@ public class Localization
 		{Items.SET_AA_ENTRY, "Anti-Aliasing"},
 		{Items.SET_MACHINEPARTICLES_ENTRY, "Machine particles"},
 		{Items.SET_CAMERACLIP, "Extend camera render distance"},
-		
+
 		{Items.PRESET_VANILLA, "Vanilla"},
 		{Items.PRESET_OPTIMIZED, "Optimized"},
 		{Items.PRESET_OVERDRIVE, "Minimal"},
@@ -119,7 +142,7 @@ public class Localization
 		{Items.SPOT, "Spotlight"},
 		{Items.DIRECTIONAL, "Directional"},
 	};
-	private readonly static Dictionary<Items, string> japaneseDict = new()
+	private readonly static Dictionary<string, string> japaneseDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
@@ -200,7 +223,7 @@ public class Localization
 		{Items.RANGE, "範囲"},
 		{Items.INTENSITY, "強度"},
 	};
-	private readonly static Dictionary<Items, string> simplifiedChineseDict = new()
+	private readonly static Dictionary<string, string> simplifiedChineseDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
@@ -241,7 +264,7 @@ public class Localization
 		{Items.PRESET_OVERDRIVE, "极简"},
 		{Items.PRESET_CUSTOM, "自定义"},
 	};
-	private readonly static Dictionary<Items, string> traditionalChineseDict = new()
+	private readonly static Dictionary<string, string> traditionalChineseDict = new()
 	{
 		{Items.OFF, "Off"},
 		{Items.ON, "On"},
@@ -293,14 +316,14 @@ public class Localization
 		OnLocaleChanged?.Invoke();
 	}
 
-	public static string GetText(Items item)
+	public static string GetText(string item)
 	{
 		return GetTextLocale(item, Config.Language);
 	}
 
-	public static string GetTextLocale(Items item, Config.LanguageType locale)
+	public static string GetTextLocale(string item, Config.LanguageType locale)
 	{
-		Dictionary<Items, string> dict = locale switch
+		Dictionary<string, string> dict = locale switch
 		{
 			Config.LanguageType.Japanese => japaneseDict,
 			Config.LanguageType.Chinese_t => traditionalChineseDict,
@@ -316,5 +339,16 @@ public class Localization
 			return GetTextLocale(item, Config.LanguageType.English);
 		// Else, since the default is English and nothing was found, return an error.
 		return "ERR: No Text";
+	}
+
+	public static void RegisterTranslation()
+	{
+		ArchEmperorLib.Localization.AddTranslation(MyPluginInfo.PLUGIN_GUID, new() { {
+			ArchEmperorLib.Localization.Locales.DEFAULT, englishDict },
+			{ ArchEmperorLib.Localization.Locales.JAPANESE, japaneseDict },
+			{ ArchEmperorLib.Localization.Locales.CHINESE, traditionalChineseDict },
+			{ ArchEmperorLib.Localization.Locales.CHINESE_SIMPLIFIED, simplifiedChineseDict },
+			});
+		ArchEmperorLib.ModSettingsManager.AddTextRelations(MyPluginInfo.PLUGIN_GUID, ModSettings.valueTextRelation);
 	}
 }

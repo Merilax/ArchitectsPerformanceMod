@@ -734,17 +734,17 @@ public class EnvironmentUI
 		{
 			xPos = float.Parse(x.text) / INPUT_MULTIPLIER;
 		}
-		catch (System.Exception) { }
+		catch (Exception) { }
 		try
 		{
 			yPos = float.Parse(y.text) / INPUT_MULTIPLIER;
 		}
-		catch (System.Exception) { }
+		catch (Exception) { }
 		try
 		{
 			zPos = float.Parse(z.text) / INPUT_MULTIPLIER;
 		}
-		catch (System.Exception) { }
+		catch (Exception) { }
 
 		zPos += designer_offset_z;
 		vec = new(xPos, yPos, zPos);
@@ -1120,7 +1120,7 @@ public class LightControl
 			UIContainer?.active = false;
 			Plugin.LogDebug("Light.Destroy Out");
 		}
-		catch (System.Exception ex)
+		catch (Exception ex)
 		{
 			Plugin.LogInfo("ERR: LightControl failed to destroy one of its properties.");
 			Plugin.Log.LogError(ex);

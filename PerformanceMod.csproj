@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>ArchitectsPerformanceMod</AssemblyName>
+    <AssemblyName>ArchPerformanceMod</AssemblyName>
     <Product>Architect's Performance Mod</Product>
-    <Version>1.3.7</Version>
+    <Version>1.4.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -22,6 +22,9 @@
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
     <Reference Include="Assembly-CSharp">
       <HintPath>..\lib\PUBLIC\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="ArchEmperorLib">
+      <HintPath>..\lib\ArchEmperorLib.dll</HintPath>
     </Reference>
     <Reference Include="CoreModule">
       <HintPath>..\lib\PUBLIC\UnityEngine.CoreModule.dll</HintPath>
@@ -71,9 +74,9 @@
     <Reference Include="UnityTextRendering">
       <HintPath>..\lib\PUBLIC\UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
-    <Reference Include="FusionRuntime">
+    <!-- <Reference Include="FusionRuntime">
       <HintPath>..\lib\PUBLIC\Fusion.Runtime.dll</HintPath>
-    </Reference>
+    </Reference> -->
     <Reference Include="UniverseLib">
       <HintPath>..\lib\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
     </Reference>
