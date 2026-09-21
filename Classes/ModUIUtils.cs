@@ -297,8 +297,10 @@ public static class UIUtils
 		dropdown.options = new();
 		for (int i = 0; i < items.Count; i++)
 		{
-			dropdown.options.Add(new Dropdown.OptionData(Localization.GetText(items[i])));
-			Localization.OnLocaleChanged += () => dropdown.options[i].text = Localization.GetText(items[i]);
+			var optionData = new Dropdown.OptionData(Localization.GetText(items[i]));
+			dropdown.options.Add(optionData);
+			var option = dropdown.options[i];
+			Localization.OnLocaleChanged += () => option?.text = Localization.GetText(items[i]);
 		}
 
 		dropdown.transition = Selectable.Transition.ColorTint;

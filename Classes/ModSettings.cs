@@ -91,6 +91,8 @@ public class ModSettings
 	public static ConfigEntry<AntialiasingEnum> confAntialiasing;
 	public static ConfigEntry<ModSettingsManager.QuantityEnum> confMachineParticles;
 	public static ConfigEntry<ModSettingsManager.ToggleEnum> confCameraClipPlane;
+	public static ConfigEntry<ModSettingsManager.ToggleEnum> confSunlightShadows;
+	public static ConfigEntry<ModSettingsManager.ToggleEnum> confGaiaDetailManager;
 
 	private static List<dynamic> cycleConfigEntries = [];
 	private static CycleConfigEntry<PerformancePresets> _confPreset;
@@ -105,6 +107,8 @@ public class ModSettings
 	private static CycleConfigEntry<AntialiasingEnum> _confAntialiasing;
 	private static CycleConfigEntry<ModSettingsManager.QuantityEnum> _confMachineParticles;
 	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confCameraClipPlane;
+	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confSunlightShadows;
+	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confGaiaDetailManager;
 
 	public static SettingBlock settingBlock = new();
 
@@ -134,7 +138,9 @@ public class ModSettings
 		confDockLights = config.Bind("Graphics", "DockLights", ModSettingsManager.ToggleEnum.on, "Sets the quality of lights in the player dock. Useful if GI and SSR are off, which makes some shadows look weird. Cost: Light.");
 		confAntialiasing = config.Bind("Graphics", "AntiAliasing", AntialiasingEnum.MSAA, "Sets the AntiAliasing type to use, if any. Cost: Very light.");
 		confMachineParticles = config.Bind("Graphics", "MachineParticles", ModSettingsManager.QuantityEnum.full, "Sets the amount of particles and other machine-related effects. Cost: Light.");
-		confCameraClipPlane = config.Bind("Graphics", "CameraClipPlane", ModSettingsManager.ToggleEnum.off, "Extends the render distance of the main camera. Cost: Variable.");
+		// confCameraClipPlane = config.Bind("Graphics", "CameraClipPlane", ModSettingsManager.ToggleEnum.off, "Extends the render distance of the main camera. Cost: Variable.");
+		confSunlightShadows = config.Bind("Graphics", "SunlightShadows", ModSettingsManager.ToggleEnum.on, "Extends the render distance of the main camera. Cost: Variable.");
+		confGaiaDetailManager = config.Bind("Graphics", "GAIADetailManager", ModSettingsManager.ToggleEnum.on, "Toggles the GAIA Detail Manager.");
 
 		_confPreset = new CycleConfigEntry<PerformancePresets>(MyPluginInfo.PLUGIN_GUID, confPreset, presetEnums);
 		_confReflections = new CycleConfigEntry<StrengthEnum>(MyPluginInfo.PLUGIN_GUID, confReflections, strengthEnums);
@@ -147,16 +153,20 @@ public class ModSettings
 		_confDockLights = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confDockLights, ModSettingsManager.ConfigEnums.toggleEnums);
 		_confAntialiasing = new CycleConfigEntry<AntialiasingEnum>(MyPluginInfo.PLUGIN_GUID, confAntialiasing, antialiasingEnums);
 		_confMachineParticles = new CycleConfigEntry<ModSettingsManager.QuantityEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confMachineParticles, ModSettingsManager.ConfigEnums.quantityEnums);
-		_confCameraClipPlane = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confCameraClipPlane, ModSettingsManager.ConfigEnums.toggleEnums);
+		// _confCameraClipPlane = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confCameraClipPlane, ModSettingsManager.ConfigEnums.toggleEnums);
+		_confSunlightShadows = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confSunlightShadows, ModSettingsManager.ConfigEnums.toggleEnums);
+		_confGaiaDetailManager = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confGaiaDetailManager, ModSettingsManager.ConfigEnums.toggleEnums);
 
-		configEntries = [confPreset, confGlobalIllumination, confReflections, confShadowQuality, confVolumetrics, confAmbientOcclusion, confChromaAberration, confVignette, confShadowQuality, confDockLights, confAntialiasing, confMachineParticles, confCameraClipPlane];
-		cycleConfigEntries = [_confPreset, _confReflections, _confShadowQuality, _confVolumetrics, _confAmbientOcclusion, _confChromaAberration, _confVignette, _confShadowQuality, _confDockLights, _confAntialiasing, _confMachineParticles, _confCameraClipPlane];
+		configEntries = [confPreset, confReflections, confShadowQuality, confVolumetrics, confAmbientOcclusion, confChromaAberration, confVignette, confShadowQuality, confDockLights, confAntialiasing, confMachineParticles, confSunlightShadows, confGaiaDetailManager];
+		cycleConfigEntries = [_confPreset, _confReflections, _confShadowQuality, _confVolumetrics, _confAmbientOcclusion, _confChromaAberration, _confVignette, _confShadowQuality, _confDockLights, _confAntialiasing, _confMachineParticles, _confSunlightShadows, _confGaiaDetailManager];
 
 		settingBlock.AddSetting(Localization.Items.SET_PRESET, _confPreset);
 		settingBlock.AddSetting(Localization.Items.SET_SSR_ENTRY, _confReflections);
 		settingBlock.AddSetting(Localization.Items.SET_SHADOWQUALITY_ENTRY, _confShadowQuality);
+		settingBlock.AddSetting(Localization.Items.SET_SUNLIGHTSHADOWS_ENTRY, _confSunlightShadows);
 		settingBlock.AddSetting(Localization.Items.SET_VOLUMETRICS, _confVolumetrics);
 		settingBlock.AddSetting(Localization.Items.SET_DOCKLIGHTS_ENTRY, _confDockLights);
+		settingBlock.AddSetting(Localization.Items.SET_GAIADETAIL_ENTRY, _confGaiaDetailManager);
 		settingBlock.AddSetting(Localization.Items.SET_AO_ENTRY, _confAmbientOcclusion);
 		settingBlock.AddSetting(Localization.Items.SET_CHROMAABERRATION_ENTRY, _confChromaAberration);
 		settingBlock.AddSetting(Localization.Items.SET_VIGNETTE_ENTRY, _confVignette);
@@ -198,6 +208,8 @@ public class ModSettings
 					confAntialiasing.Value = AntialiasingEnum.off;
 					confMachineParticles.Value = ModSettingsManager.QuantityEnum.none;
 					// confCameraClipPlane.Value = ToggleEnum.off;
+					confSunlightShadows.Value = ModSettingsManager.ToggleEnum.off;
+					confGaiaDetailManager.Value = ModSettingsManager.ToggleEnum.off;
 					break;
 				case PerformancePresets.Optimized:
 					// confGlobalIllumination.Value = ToggleEnum.off;
@@ -212,6 +224,8 @@ public class ModSettings
 					confAntialiasing.Value = AntialiasingEnum.MSAA;
 					confMachineParticles.Value = ModSettingsManager.QuantityEnum.reduced;
 					// confCameraClipPlane.Value = ToggleEnum.off;
+					confSunlightShadows.Value = ModSettingsManager.ToggleEnum.on;
+					confGaiaDetailManager.Value = ModSettingsManager.ToggleEnum.off;
 					break;
 				case PerformancePresets.Vanilla:
 				default:
@@ -227,6 +241,8 @@ public class ModSettings
 					confAntialiasing.Value = AntialiasingEnum.MSAA;
 					confMachineParticles.Value = ModSettingsManager.QuantityEnum.full;
 					// confCameraClipPlane.Value = ToggleEnum.off;
+					confSunlightShadows.Value = ModSettingsManager.ToggleEnum.on;
+					confGaiaDetailManager.Value = ModSettingsManager.ToggleEnum.on;
 					break;
 			}
 		}
@@ -246,7 +262,10 @@ public class ModSettings
 		ModPerformance.SetVignette(confVignette.Value);
 		ModPerformance.SetShadowTones(confShadowTones.Value);
 		ModPerformance.SetAntialiasing(confAntialiasing.Value);
-		ModPerformance.SetExtendCameraRenderDistance(confCameraClipPlane.Value);
+		// ModPerformance.SetExtendCameraRenderDistance(confCameraClipPlane.Value);
+		ModPerformance.SetSunShadows(confSunlightShadows.Value);
+		ModPerformance.SetGaiaDetailManager(confGaiaDetailManager.Value);
+		
 		if (delayedInit)
 		{
 			ModPerformance.SetDockLights(confDockLights.Value);

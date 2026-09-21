@@ -19,7 +19,7 @@ public class ModGameplay
 				foreach (CheckPointData checkpoint in checkpoints)
 				{
 					BoxCollider box = checkpoint._transform.GetComponent<BoxCollider>();
-					box.size = new Vector3(box.size.x, box.size.y, 20);
+					box?.size = new Vector3(box.size.x, box.size.y, 20);
 				}
 
 				Plugin.LogInfo("Patched checkpoint hitboxes (singleplayer)");

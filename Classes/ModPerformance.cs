@@ -1,4 +1,5 @@
 using System.Linq;
+using GPUInstancer;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,6 +11,18 @@ namespace ArchPerformanceMod;
 
 public class ModPerformance
 {
+	private struct SceneSettingTargets
+	{
+		public VolumeComponent SSR;
+		public ReflectionProbe globalReflectionProbe;
+		public Light sunlight;
+		public GPUInstancerDetailManager GaiaDetail;
+		public GPUInstancerTerrainSettings GaiaTerrain;
+	}
+	private static Scene activeStage;
+	private static SceneSettingTargets circuitSettingTargets;
+	private static SceneSettingTargets mainMenuSettingTargets;
+
 	public static GameObject GetEnvironmentObj()
 	{
 		Scene diorama = SceneManager.GetSceneByName("Georama");
@@ -29,33 +42,60 @@ public class ModPerformance
 	}
 
 	[HarmonyPostfix]
-	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
-	public static void ApplyConfigInDiorama()
+	[HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
+	public static void OnSetupStage(StageInfo __instance)
 	{
-		SetGlobalIllumination(Config.UseGI);
-		// SetGlobalIllumination(ModSettings.confGlobalIllumination.Value);
-		// SetReflections(ModSettings.confReflections.Value);
-		SetChromaAberration(ModSettings.confChromaAberration.Value);
-		SetVignette(ModSettings.confVignette.Value);
-		SetShadowTones(ModSettings.confShadowTones.Value);
-		// SetDockLights(ModSettings.confDockLights.Value);
-		SetAntialiasing(ModSettings.confAntialiasing.Value);
-		SetShadowQuality(ModSettings.confShadowQuality.Value);
-		// SetMachineParticles(ModSettings.confMachineParticles.Value);
-		// SetExtendCameraRenderDistance(ModSettings.confCameraClipPlane.Value);
+		activeStage = SceneManager.GetActiveScene();
+		GameObject[] rootObjs = activeStage.GetRootGameObjects();
 
-		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
-			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR
-			ModSettings.confAmbientOcclusion.Value == ArchEmperorLib.ModSettingsManager.ToggleEnum.off, // Ambient Occlusion
-			ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off, // Volumetrics // Disabled if not on
-			true, // Vol Clouds
-			true, // Subsurface Scattering
-			true, // Decals (already disabled by default)
-			ModSettings.confMachineParticles.Value != ArchEmperorLib.ModSettingsManager.QuantityEnum.full, // Distortion
-			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR Transparency
-			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // Screen Space Lens Flare
-			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def  // Data Driven Lens Flare
-		);
+		SceneSettingTargets tempMapSettingTargets = new();
+
+		try
+		{
+			switch (activeStage.name)
+			{
+				case "Grass_01":
+					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Global Volume").GetComponent<Volume>().profile.components[6];
+					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Reflection Probe").GetComponent<ReflectionProbe>();
+					break;
+				case "Grass_02":
+					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Global Volume").GetComponent<Volume>().profile.components[7];
+					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Global Reflection Probe").GetComponent<ReflectionProbe>();
+					break;
+				case "Canyon_01":
+				case "Canyon_02":
+					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<Volume>(true).profile.components[6];
+					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<ReflectionProbe>(true);
+					break;
+				case "Cyber_01":
+				case "Cyber_02":
+				case "Sea_01":
+				case "Sea_02":
+				case "Sky_01":
+					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<Volume>(true).profile.components[7];
+					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<ReflectionProbe>(true);
+					break;
+				case "Moon_01":
+					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Volume Profile").GetComponent<Volume>().profile.components[7];
+					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "-----------Enviroments-----------------------").transform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>();
+					break;
+			}
+		}
+		catch (System.Exception ex)
+		{
+			Plugin.Log.LogError("Could not find Reflection objects. See below:");
+			Plugin.Log.LogError(ex);
+		}
+
+		SceneGraphicSwitcher sceneGraphicSwitcher = __instance.GetComponent<SceneGraphicSwitcher>();
+		tempMapSettingTargets.sunlight = sceneGraphicSwitcher._directionalLight;
+		tempMapSettingTargets.GaiaDetail = sceneGraphicSwitcher._gpui;
+		tempMapSettingTargets.GaiaTerrain = sceneGraphicSwitcher._gpuiTerrain;
+
+		circuitSettingTargets = tempMapSettingTargets;
+
+		ApplyReflectionsInRace();
+		ApplyParticlesInRace();
 	}
 
 	public static void SetGlobalIllumination(bool toSet)
@@ -205,111 +245,14 @@ public class ModPerformance
 		camera.farClipPlane = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.off ? 2000 : 20000;
 	}
 
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
-	public static void ApplyReflectionsInRace()
+	public static void SetSunShadows(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
-		Scene scene = SceneManager.GetActiveScene();
-		GameObject[] rootObjs = scene.GetRootGameObjects();
-
-		switch (scene.name)
-		{
-			case "Grass_01":
-				var track = rootObjs.First(item => item.name == "Circuit_01").transform;
-				switch (ModSettings.confReflections.Value)
-				{
-					case ModSettings.StrengthEnum.def:
-					case ModSettings.StrengthEnum.optimized:
-						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[6].active = true;
-						rootObjs.First(item => item.name == "Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = true;
-						break;
-					case ModSettings.StrengthEnum.aggresive:
-						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[6].active = false;
-						rootObjs.First(item => item.name == "Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = false;
-						break;
-				}
-				break;
-			case "Grass_02":
-				switch (ModSettings.confReflections.Value)
-				{
-					case ModSettings.StrengthEnum.def:
-					case ModSettings.StrengthEnum.optimized:
-						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[7].active = true;
-						rootObjs.First(item => item.name == "Global Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = true;
-						break;
-					case ModSettings.StrengthEnum.aggresive:
-						rootObjs.First(item => item.name == "Global Volume").transform.GetComponent<Volume>().profile.components[7].active = false;
-						rootObjs.First(item => item.name == "Global Reflection Probe").transform.GetComponent<ReflectionProbe>().enabled = false;
-						break;
-				}
-				break;
-
-			case "Moon_01":
-				Transform xform = rootObjs.First(item => item.name == "-----------Enviroments-----------------------").transform;
-				switch (ModSettings.confReflections.Value)
-				{
-					case ModSettings.StrengthEnum.def:
-					case ModSettings.StrengthEnum.optimized:
-						xform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = true;
-						break;
-					case ModSettings.StrengthEnum.aggresive:
-						xform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = false;
-						break;
-				}
-				break;
-			case "Canyon_01":
-			case "Canyon_02":
-			case "Cyber_01":
-			case "Cyber_02":
-			case "Sea_01":
-			case "Sea_02":
-			case "Sky_01":
-				switch (ModSettings.confReflections.Value)
-				{
-					case ModSettings.StrengthEnum.def:
-					case ModSettings.StrengthEnum.optimized:
-						rootObjs.First(item => item.name == "Lightings").transform.Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = true;
-						rootObjs.First(item => item.name == "Probes").active = true;
-						break;
-					case ModSettings.StrengthEnum.aggresive:
-						rootObjs.First(item => item.name == "Lightings").transform.Find("Global Reflection Probe").GetComponent<ReflectionProbe>().enabled = false;
-						rootObjs.First(item => item.name == "Probes").active = false;
-						break;
-				}
-				break;
-		}
+		circuitSettingTargets.sunlight?.shadows = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.on ? LightShadows.Soft : LightShadows.None;
 	}
 
-	[HarmonyPrefix]
-	[HarmonyPatch(typeof(ProbeManager), nameof(ProbeManager.SafeSetActive))]
-	// Toggles race track probes as needed.
-	public static void ToggleTrackProbes(ref ProbeManager.ProbeEntry e, ref bool active)
+	public static void SetGaiaDetailManager(ArchEmperorLib.ModSettingsManager.ToggleEnum toSet)
 	{
-		if (SceneManager.GetActiveScene().name != "MainMenu" && SceneManager.GetActiveScene().name != "Settings")
-			active = ModSettings.confReflections.Value != ModSettings.StrengthEnum.aggresive;
-	}
-
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(StageInfo), nameof(StageInfo.SetupStage))]
-	public static void ApplyParticlesInRace()
-	{
-		Transform players = GetPlayersObj().transform;
-
-		for (int i = 0; i < players.childCount; i++)
-		{
-			Transform player = players.GetChild(i);
-			if (player.name.Contains("Debug")) continue;
-			if (!player.gameObject.active) continue;
-
-			Transform playerVFX = player.Find("Effects");
-
-			var toSet = ModSettings.confMachineParticles.Value;
-			bool myPlayer = false;
-
-			if (player.name.Contains("MyPlayer"))
-				myPlayer = true;
-			SetSpecificMachineParticles(playerVFX, toSet, myPlayer);
-		}
+		circuitSettingTargets.GaiaDetail?.enabled = toSet == ArchEmperorLib.ModSettingsManager.ToggleEnum.on;
 	}
 
 	private static void SetSpecificMachineParticles(Transform playerVFX, ArchEmperorLib.ModSettingsManager.QuantityEnum toSet, bool isMainPlayer = false)
@@ -376,5 +319,81 @@ public class ModPerformance
 		{
 			SetModuleParticles(xform.GetChild(i), toSet);
 		}
+	}
+
+	public static void ApplyReflectionsInRace()
+	{
+		bool toSet = ModSettings.confReflections.Value == ModSettings.StrengthEnum.def || ModSettings.confReflections.Value == ModSettings.StrengthEnum.optimized;
+		circuitSettingTargets.SSR?.active = toSet;
+		circuitSettingTargets.globalReflectionProbe?.enabled = toSet;
+	}
+
+	public static void ApplyParticlesInRace()
+	{
+		Transform players = GetPlayersObj().transform;
+
+		for (int i = 0; i < players.childCount; i++)
+		{
+			Transform player = players.GetChild(i);
+			if (player.name.Contains("Debug")) continue;
+			if (!player.gameObject.active) continue;
+
+			Transform playerVFX = player.Find("Effects");
+
+			var toSet = ModSettings.confMachineParticles.Value;
+			bool myPlayer = false;
+
+			if (player.name.Contains("MyPlayer"))
+				myPlayer = true;
+			SetSpecificMachineParticles(playerVFX, toSet, myPlayer);
+		}
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
+	public static void ApplyConfigInDiorama()
+	{
+		SetGlobalIllumination(Config.UseGI);
+		// SetGlobalIllumination(ModSettings.confGlobalIllumination.Value);
+		// SetReflections(ModSettings.confReflections.Value);
+		SetChromaAberration(ModSettings.confChromaAberration.Value);
+		SetVignette(ModSettings.confVignette.Value);
+		SetShadowTones(ModSettings.confShadowTones.Value);
+		// SetDockLights(ModSettings.confDockLights.Value);
+		SetAntialiasing(ModSettings.confAntialiasing.Value);
+		SetShadowQuality(ModSettings.confShadowQuality.Value);
+		// SetMachineParticles(ModSettings.confMachineParticles.Value);
+		// SetExtendCameraRenderDistance(ModSettings.confCameraClipPlane.Value);
+
+		HDRPReflectionHelper.ApplyPipelineSupportFlagBatch( // true = disabled
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR
+			ModSettings.confAmbientOcclusion.Value == ArchEmperorLib.ModSettingsManager.ToggleEnum.off, // Ambient Occlusion
+			ModSettings.confVolumetrics.Value == ModSettings.DioramaOnlyEnum.off, // Volumetrics // Disabled if not on
+			true, // Vol Clouds
+			true, // Subsurface Scattering
+			true, // Decals (already disabled by default)
+			ModSettings.confMachineParticles.Value != ArchEmperorLib.ModSettingsManager.QuantityEnum.full, // Distortion
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // SSR Transparency
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def, // Screen Space Lens Flare
+			ModSettings.confReflections.Value != ModSettings.StrengthEnum.def  // Data Driven Lens Flare
+		);
+	}
+
+	// Toggles race track probes as needed.
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(ProbeManager), nameof(ProbeManager.SafeSetActive))]
+	public static void ProbeManager_SafeSetActive(ref ProbeManager.ProbeEntry e, ref bool active)
+	{
+		if (SceneManager.GetActiveScene().name != "MainMenu" && SceneManager.GetActiveScene().name != "Settings")
+			active = ModSettings.confReflections.Value != ModSettings.StrengthEnum.aggresive;
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(MatchManager), nameof(MatchManager.CheckNextMatchOrCelemony))]
+	[HarmonyPatch(typeof(MatchManager), nameof(MatchManager.RetryMatch))]
+	[HarmonyPatch(typeof(MatchManager), nameof(MatchManager.RetireMatch))]
+	public static void OnMatchManagerSceneChange()
+	{
+		circuitSettingTargets = new();
 	}
 }
