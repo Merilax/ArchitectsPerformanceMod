@@ -21,7 +21,6 @@ public class ModPerformance
 	}
 	private static Scene activeStage;
 	private static SceneSettingTargets circuitSettingTargets;
-	private static SceneSettingTargets mainMenuSettingTargets;
 
 	public static GameObject GetEnvironmentObj()
 	{

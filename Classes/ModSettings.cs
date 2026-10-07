@@ -90,7 +90,7 @@ public class ModSettings
 	public static ConfigEntry<ModSettingsManager.ToggleEnum> confDockLights;
 	public static ConfigEntry<AntialiasingEnum> confAntialiasing;
 	public static ConfigEntry<ModSettingsManager.QuantityEnum> confMachineParticles;
-	public static ConfigEntry<ModSettingsManager.ToggleEnum> confCameraClipPlane;
+	// public static ConfigEntry<ModSettingsManager.ToggleEnum> confCameraClipPlane;
 	public static ConfigEntry<ModSettingsManager.ToggleEnum> confSunlightShadows;
 	public static ConfigEntry<ModSettingsManager.ToggleEnum> confGaiaDetailManager;
 
@@ -106,7 +106,7 @@ public class ModSettings
 	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confDockLights;
 	private static CycleConfigEntry<AntialiasingEnum> _confAntialiasing;
 	private static CycleConfigEntry<ModSettingsManager.QuantityEnum> _confMachineParticles;
-	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confCameraClipPlane;
+	// private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confCameraClipPlane;
 	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confSunlightShadows;
 	private static CycleConfigEntry<ModSettingsManager.ToggleEnum> _confGaiaDetailManager;
 

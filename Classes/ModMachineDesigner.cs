@@ -40,6 +40,16 @@ public class EnvironmentUIPatch()
 	private static EnvironmentUI dioramaUI; // Destroyed on exit.
 
 	[HarmonyPostfix]
+	[HarmonyPatch(typeof(MachineDesignerUI), nameof(MachineDesignerUI.Start))]
+	public static void MachineDesignerUI_Start(MachineDesignerUI __instance)
+	{
+		__instance.Misc_MachineNameInput.onSelect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = false; })); // designerUI?.modNav.active = false;
+		__instance.Misc_MachineNameInput.onDeselect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = true; }));
+		__instance.Misc_MachineDescriptionInput.onSelect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = false; }));
+		__instance.Misc_MachineDescriptionInput.onDeselect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = true; }));
+	}
+
+	[HarmonyPostfix]
 	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Diorama_OpenMachineDesign))]
 	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Designer_Design))]
 	public static void PrepareDesignerUI()
@@ -53,11 +63,11 @@ public class EnvironmentUIPatch()
 	{
 		BridgedSceneManager.OnSceneLoadComplete.AddListener((Action)(() =>
 		{
-			dioramaUI = new(true)
-			{
-				currentLightPattern = __instance.currentLightPattern
-			};
+			dioramaUI = new(true) { currentLightPattern = __instance.currentLightPattern };
 		}));
+
+		__instance.inputField.onSelect.AddListener((Action<string>)((str) => { dioramaUI?.allowInteraction = false; })); // dioramaUI?.modNav.active = false;
+		__instance.inputField.onDeselect.AddListener((Action<string>)((str) => { dioramaUI?.allowInteraction = true; }));
 	}
 
 	[HarmonyPrefix]
@@ -83,20 +93,16 @@ public class EnvironmentUIPatch()
 	{
 		if (dioramaUI == null) return;
 		if (Keyboard.current.hKey.wasPressedThisFrame && dioramaUI.allowInteraction)
-		{
 			dioramaUI.HideAll();
-		}
-		if (Keyboard.current.tabKey.wasPressedThisFrame && dioramaUI.allowInteraction)
-		{
+		if (Keyboard.current.lKey.wasPressedThisFrame && dioramaUI.allowInteraction)
 			dioramaUI.modNav.active = !dioramaUI.modNav.active;
-		}
 	}
 	[HarmonyPostfix]
-	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Update))]
-	public static void OnUpdate(Scene_MainMenu __instance) // TODO Check when we are in design mode
+	[HarmonyPatch(typeof(MachineDesignerUI), nameof(MachineDesignerUI.UI_Update))]
+	public static void MachineDesignerUI_Update()
 	{
-		// if (__instance.) 
 		if (designerUI == null) return;
+		Plugin.LogInfo(designerUI?.allowInteraction);
 		if (Keyboard.current.lKey.wasPressedThisFrame && designerUI.allowInteraction)
 		{
 			designerUI.modNav.active = !designerUI.modNav.active;
