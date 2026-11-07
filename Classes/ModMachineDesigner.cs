@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace ArchPerformanceMod;
 
-public class UICommons
+public static class UICommons
 {
 	public const int FONT_SIZE_LARGE = 28;
 	public const int FONT_SIZE_NORMAL = 20;
@@ -54,7 +54,7 @@ public class EnvironmentUIPatch()
 	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Designer_Design))]
 	public static void PrepareDesignerUI()
 	{
-		designerUI = new(false);
+		designerUI ??= new(false);
 	}
 
 	[HarmonyPostfix]
@@ -83,7 +83,7 @@ public class EnvironmentUIPatch()
 	public static void OnCloseDesigner()
 	{
 		designerUI?.allowInteraction = false;
-		designerUI = null;
+		// designerUI = null;
 		Plugin.SaveConfig();
 	}
 
@@ -102,7 +102,6 @@ public class EnvironmentUIPatch()
 	public static void MachineDesignerUI_Update()
 	{
 		if (designerUI == null) return;
-		Plugin.LogInfo(designerUI?.allowInteraction);
 		if (Keyboard.current.lKey.wasPressedThisFrame && designerUI.allowInteraction)
 		{
 			designerUI.modNav.active = !designerUI.modNav.active;

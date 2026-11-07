@@ -16,13 +16,15 @@ public class ModGameplay
 			{
 				var checkpoints = UnityEngine.Object.FindObjectsOfType<CheckPointData>();
 
-				foreach (CheckPointData checkpoint in checkpoints)
+				if (checkpoints != null)
 				{
-					BoxCollider box = checkpoint._transform.GetComponent<BoxCollider>();
-					box?.size = new Vector3(box.size.x, box.size.y, 20);
+					foreach (CheckPointData checkpoint in checkpoints)
+					{
+						BoxCollider box = checkpoint._transform.GetComponent<BoxCollider>();
+						box?.size = new Vector3(box.size.x, box.size.y, 20);
+					}
+					Plugin.LogInfo("Patched checkpoint hitboxes (singleplayer)");
 				}
-
-				Plugin.LogInfo("Patched checkpoint hitboxes (singleplayer)");
 			}
 			catch (Exception ex)
 			{

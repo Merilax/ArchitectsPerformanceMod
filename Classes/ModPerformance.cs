@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using GPUInstancer;
 using HarmonyLib;
@@ -19,6 +20,7 @@ public class ModPerformance
 		public GPUInstancerDetailManager GaiaDetail;
 		public GPUInstancerTerrainSettings GaiaTerrain;
 	}
+	public static readonly string[] vanillaScenes = ["Grass_01", "Grass_02", "Canyon_01", "Canyon_02", "Cyber_01", "Cyber_02", "Sea_01", "Sea_02", "Sky_01", "Moon_01"];
 	private static Scene activeStage;
 	private static SceneSettingTargets circuitSettingTargets;
 
@@ -46,50 +48,53 @@ public class ModPerformance
 	{
 		activeStage = SceneManager.GetActiveScene();
 		GameObject[] rootObjs = activeStage.GetRootGameObjects();
-
 		SceneSettingTargets tempMapSettingTargets = new();
 
-		try
-		{
-			switch (activeStage.name)
+		if (vanillaScenes.Contains(activeStage.name))
+			try
 			{
-				case "Grass_01":
-					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Global Volume").GetComponent<Volume>().profile.components[6];
-					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Reflection Probe").GetComponent<ReflectionProbe>();
-					break;
-				case "Grass_02":
-					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Global Volume").GetComponent<Volume>().profile.components[7];
-					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Global Reflection Probe").GetComponent<ReflectionProbe>();
-					break;
-				case "Canyon_01":
-				case "Canyon_02":
-					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<Volume>(true).profile.components[6];
-					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<ReflectionProbe>(true);
-					break;
-				case "Cyber_01":
-				case "Cyber_02":
-				case "Sea_01":
-				case "Sea_02":
-				case "Sky_01":
-					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<Volume>(true).profile.components[7];
-					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<ReflectionProbe>(true);
-					break;
-				case "Moon_01":
-					tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Volume Profile").GetComponent<Volume>().profile.components[7];
-					tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "-----------Enviroments-----------------------").transform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>();
-					break;
+				switch (activeStage.name)
+				{
+					case "Grass_01":
+						tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Global Volume").GetComponent<Volume>().profile.components[6];
+						tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Reflection Probe").GetComponent<ReflectionProbe>();
+						break;
+					case "Grass_02":
+						tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Global Volume").GetComponent<Volume>().profile.components[7];
+						tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Global Reflection Probe").GetComponent<ReflectionProbe>();
+						break;
+					case "Canyon_01":
+					case "Canyon_02":
+						tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<Volume>(true).profile.components[6];
+						tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<ReflectionProbe>(true);
+						break;
+					case "Cyber_01":
+					case "Cyber_02":
+					case "Sea_01":
+					case "Sea_02":
+					case "Sky_01":
+						tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<Volume>(true).profile.components[7];
+						tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "Lightings").GetComponentInChildren<ReflectionProbe>(true);
+						break;
+					case "Moon_01":
+						tempMapSettingTargets.SSR = rootObjs.First(item => item.name == "Volume Profile").GetComponent<Volume>().profile.components[7];
+						tempMapSettingTargets.globalReflectionProbe = rootObjs.First(item => item.name == "-----------Enviroments-----------------------").transform.Find("Lighting").Find("Global Reflection Probe").GetComponent<ReflectionProbe>();
+						break;
+				}
 			}
-		}
-		catch (System.Exception ex)
-		{
-			Plugin.Log.LogError("Could not find Reflection objects. See below:");
-			Plugin.Log.LogError(ex);
-		}
+			catch (System.Exception ex)
+			{
+				Plugin.Log.LogError("Could not find Reflection objects. See below:");
+				Plugin.Log.LogError(ex);
+			}
 
-		SceneGraphicSwitcher sceneGraphicSwitcher = __instance.GetComponent<SceneGraphicSwitcher>();
-		tempMapSettingTargets.sunlight = sceneGraphicSwitcher._directionalLight;
-		tempMapSettingTargets.GaiaDetail = sceneGraphicSwitcher._gpui;
-		tempMapSettingTargets.GaiaTerrain = sceneGraphicSwitcher._gpuiTerrain;
+		SceneGraphicSwitcher sceneGraphicSwitcher = GameObject.FindObjectsOfType<SceneGraphicSwitcher>()?.FirstOrDefault(e => e.name != "Misc", null);
+		if (sceneGraphicSwitcher != null)
+		{
+			tempMapSettingTargets.sunlight = sceneGraphicSwitcher._directionalLight;
+			tempMapSettingTargets.GaiaDetail = sceneGraphicSwitcher._gpui;
+			tempMapSettingTargets.GaiaTerrain = sceneGraphicSwitcher._gpuiTerrain;
+		}
 
 		circuitSettingTargets = tempMapSettingTargets;
 

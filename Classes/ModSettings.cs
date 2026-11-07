@@ -120,6 +120,7 @@ public class ModSettings
 	public static void RefreshEntries()
 	{
 		cycleConfigEntries.Do(e => { e.Cancel(); });
+		CheckDisableConfigInputs();
 	}
 
 	public static void InitModConfig()
@@ -157,8 +158,8 @@ public class ModSettings
 		_confSunlightShadows = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confSunlightShadows, ModSettingsManager.ConfigEnums.toggleEnums);
 		_confGaiaDetailManager = new CycleConfigEntry<ModSettingsManager.ToggleEnum>(ArchEmperorLib.MyPluginInfo.PLUGIN_GUID, confGaiaDetailManager, ModSettingsManager.ConfigEnums.toggleEnums);
 
-		configEntries = [confPreset, confReflections, confShadowQuality, confVolumetrics, confAmbientOcclusion, confChromaAberration, confVignette, confShadowQuality, confDockLights, confAntialiasing, confMachineParticles, confSunlightShadows, confGaiaDetailManager];
-		cycleConfigEntries = [_confPreset, _confReflections, _confShadowQuality, _confVolumetrics, _confAmbientOcclusion, _confChromaAberration, _confVignette, _confShadowQuality, _confDockLights, _confAntialiasing, _confMachineParticles, _confSunlightShadows, _confGaiaDetailManager];
+		configEntries = [confPreset, confReflections, confShadowQuality, confVolumetrics, confAmbientOcclusion, confChromaAberration, confVignette, confShadowTones, confDockLights, confAntialiasing, confMachineParticles, confSunlightShadows, confGaiaDetailManager];
+		cycleConfigEntries = [_confPreset, _confReflections, _confShadowQuality, _confVolumetrics, _confAmbientOcclusion, _confChromaAberration, _confVignette, _confShadowTones, _confDockLights, _confAntialiasing, _confMachineParticles, _confSunlightShadows, _confGaiaDetailManager];
 
 		settingBlock.AddSetting(Localization.Items.SET_PRESET, _confPreset);
 		settingBlock.AddSetting(Localization.Items.SET_SSR_ENTRY, _confReflections);
@@ -174,6 +175,7 @@ public class ModSettings
 		settingBlock.AddSetting(Localization.Items.SET_AA_ENTRY, _confAntialiasing);
 		settingBlock.AddSetting(Localization.Items.SET_MACHINEPARTICLES_ENTRY, _confMachineParticles);
 
+		_confPreset.OnPendingValueChanged += CheckDisableConfigInputs;
 		currentPreset = confPreset.Value;
 		ApplyChanges();
 
@@ -249,6 +251,21 @@ public class ModSettings
 		RefreshEntries();
 	}
 
+	public static void SetPresetToCustom()
+	{
+		_confPreset.SetPendingValue(PerformancePresets.Custom);
+	}
+
+	public static void CheckDisableConfigInputs()
+	{
+		bool disable = _confPreset.Pending != PerformancePresets.Custom;
+		for (int i = 0; i < cycleConfigEntries.Count; i++)
+		{
+			if (i == 0) continue;
+			cycleConfigEntries[i].Disable(disable);
+		}
+	}
+
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(Scene_Settings), nameof(Scene_Settings.ApplySettings_Graphic))]
 	public static void ApplyChanges()
@@ -265,7 +282,7 @@ public class ModSettings
 		// ModPerformance.SetExtendCameraRenderDistance(confCameraClipPlane.Value);
 		ModPerformance.SetSunShadows(confSunlightShadows.Value);
 		ModPerformance.SetGaiaDetailManager(confGaiaDetailManager.Value);
-		
+
 		if (delayedInit)
 		{
 			ModPerformance.SetDockLights(confDockLights.Value);
