@@ -43,31 +43,28 @@ public class EnvironmentUIPatch()
 	[HarmonyPatch(typeof(MachineDesignerUI), nameof(MachineDesignerUI.Start))]
 	public static void MachineDesignerUI_Start(MachineDesignerUI __instance)
 	{
+		designerUI = new(false);
 		__instance.Misc_MachineNameInput.onSelect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = false; })); // designerUI?.modNav.active = false;
 		__instance.Misc_MachineNameInput.onDeselect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = true; }));
 		__instance.Misc_MachineDescriptionInput.onSelect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = false; }));
 		__instance.Misc_MachineDescriptionInput.onDeselect.AddListener((Action<string>)((str) => { designerUI?.allowInteraction = true; }));
 	}
 
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Diorama_OpenMachineDesign))]
-	[HarmonyPatch(typeof(Scene_MainMenu), nameof(Scene_MainMenu.Designer_Design))]
-	public static void PrepareDesignerUI()
-	{
-		designerUI ??= new(false);
-	}
-
+	private static bool loadDioramaUIOnce = false;
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(GeoramaSystem), nameof(GeoramaSystem.Start))]
 	public static void PrepareDioramaUI(GeoramaSystem __instance) // Diorama
 	{
+		designerUI = null;
+		loadDioramaUIOnce = false;
 		BridgedSceneManager.OnSceneLoadComplete.AddListener((Action)(() =>
 		{
+			if (loadDioramaUIOnce) return; // This event also triggers for other unrelated things, so we control it.
+			loadDioramaUIOnce = true;
 			dioramaUI = new(true) { currentLightPattern = __instance.currentLightPattern };
+			__instance.inputField.onSelect.AddListener((Action<string>)((str) => { dioramaUI?.allowInteraction = false; })); // dioramaUI?.modNav.active = false;
+			__instance.inputField.onDeselect.AddListener((Action<string>)((str) => { dioramaUI?.allowInteraction = true; }));
 		}));
-
-		__instance.inputField.onSelect.AddListener((Action<string>)((str) => { dioramaUI?.allowInteraction = false; })); // dioramaUI?.modNav.active = false;
-		__instance.inputField.onDeselect.AddListener((Action<string>)((str) => { dioramaUI?.allowInteraction = true; }));
 	}
 
 	[HarmonyPrefix]
@@ -83,7 +80,6 @@ public class EnvironmentUIPatch()
 	public static void OnCloseDesigner()
 	{
 		designerUI?.allowInteraction = false;
-		// designerUI = null;
 		Plugin.SaveConfig();
 	}
 
